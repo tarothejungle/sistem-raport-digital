@@ -1,0 +1,418 @@
+<?php
+
+namespace App\Filament\Admin\Pages;
+
+use App\Services\NilaiBatchService;
+use App\Filament\Admin\Resources\NilaiResource;
+use App\Models\JadwalMengajar;
+use App\Models\Nilai;
+use App\Models\Siswa;
+use App\Models\TahunAjaran;
+use Illuminate\Support\Collection;
+use Filament\Navigation\NavigationItem;
+use Filament\Pages\Page;
+use Filament\Tables;
+use Filament\Forms;
+use Filament\Forms\Get;
+use Filament\Notifications\Notification;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class InputNilaiPerMapel extends Page implements HasTable
+{
+    use InteractsWithTable;
+
+    protected static string $view = 'filament.admin.resources.InputNilaiPerMapel';
+
+    protected static ?string $title = 'Input Nilai';
+
+    protected static ?string $slug = 'input-nilai/{jadwalMengajar}';
+
+    protected static ?string $navigationGroup = 'Akademik';
+
+    protected static ?int $navigationSort = 2;
+
+    public JadwalMengajar $jadwalMengajar;
+
+    public static function canAccess(): bool
+    {
+        return NilaiResource::canViewAny();
+    }
+
+    public function mount(JadwalMengajar $jadwalMengajar): void
+    {
+        abort_unless(static::canManageJadwal($jadwalMengajar), 403);
+
+        $this->jadwalMengajar = $jadwalMengajar->loadMissing([
+            'guru.user',
+            'mataPelajaran',
+            'kelas',
+            'tahunAjaran',
+        ]);
+    }
+
+    /**
+     * @return array<int, NavigationItem>
+    */
+    public static function getNavigationItems(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return Collection<int, JadwalMengajar>
+     */
+    public static function navigasiMataPelajaran(): Collection
+    {
+        return static::jadwalYangBolehDiakses()
+            ->get()
+            ->sortBy(static function (JadwalMengajar $jadwalMengajar): string {
+                return sprintf(
+                    '%s|%s|%s',
+                    $jadwalMengajar->mataPelajaran?->kelompok ?? 'Z',
+                    strtolower($jadwalMengajar->mataPelajaran?->nama_mapel ?? ''),
+                    $jadwalMengajar->kelas?->nama_kelas ?? '',
+                );
+            })
+            ->values();
+    }
+
+    public function getHeading(): string
+    {
+        return sprintf(
+            '%s — %s',
+            $this->jadwalMengajar->mataPelajaran?->nama_mapel ?? 'Mata Pelajaran',
+            $this->jadwalMengajar->kelas?->nama_kelas ?? 'Kelas',
+        );
+    }
+
+    public function getSubheading(): ?string
+    {
+        $kkm = app(NilaiBatchService::class)
+            ->defaultKkm($this->jadwalMengajar);
+
+        return sprintf(
+            'Guru: %s | Tahun Ajaran: %s | KKM: %s',
+            $this->jadwalMengajar->guru?->nama ?? '-',
+            $this->jadwalMengajar->tahunAjaran?->label ?? '-',
+            $kkm,
+        );
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(
+                Siswa::query()
+                    ->where('kelas_id', $this->jadwalMengajar->kelas_id)
+                    ->with([
+                        'nilais' => fn (HasMany $query) => $query
+                            ->where(
+                                'jadwal_mengajar_id',
+                                $this->jadwalMengajar->getKey(),
+                            ),
+                    ]),
+            )
+            ->defaultSort('nama_lengkap')
+            ->headerActions([
+                Tables\Actions\Action::make('tambahNilai')
+                    ->label('Tambah Nilai')
+                    ->icon('heroicon-o-plus')
+                    ->color('primary')
+                    ->modalHeading('Input Nilai Siswa')
+                    ->modalDescription(
+                        'Isi nilai seluruh siswa sekaligus. Nilai lama akan dimuat otomatis dan dapat diperbarui.'
+                    )
+                    ->modalWidth('7xl')
+                    ->modalSubmitActionLabel('Simpan Nilai')
+                    ->modalCancelActionLabel('Batal')
+                    ->fillForm(fn (): array => [
+                        'kode_mapel' => $this->jadwalMengajar
+                            ->mataPelajaran?->kode_mapel ?? '-',
+
+                        'nama_mapel' => $this->jadwalMengajar
+                            ->mataPelajaran?->nama_mapel ?? '-',
+
+                        'kelas' => $this->jadwalMengajar
+                            ->kelas?->nama_kelas ?? '-',
+
+                        'kkm' => app(NilaiBatchService::class)
+                            ->defaultKkm($this->jadwalMengajar),
+
+                        'deskripsi' => $this->deskripsiLanjutanSaatIni(),
+
+                        'nilai_siswa' => app(NilaiBatchService::class)
+                            ->rowsForSchedule($this->jadwalMengajar),
+                    ])
+                    ->form([
+                        Forms\Components\Section::make('Identitas Penilaian')
+                            ->schema([
+                                Forms\Components\TextInput::make('kode_mapel')
+                                    ->label('Kode Mata Pelajaran')
+                                    ->disabled()
+                                    ->dehydrated(false),
+
+                                Forms\Components\TextInput::make('nama_mapel')
+                                    ->label('Mata Pelajaran')
+                                    ->disabled()
+                                    ->dehydrated(false),
+
+                                Forms\Components\TextInput::make('kelas')
+                                    ->label('Kelas')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                            ])
+                            ->columns(3),
+
+                        Forms\Components\Section::make('Pengaturan Nilai')
+                            ->schema([
+                                Forms\Components\TextInput::make('kkm')
+                                    ->label('KKM')
+                                    ->numeric()
+                                    ->integer()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->required()
+                                    ->helperText(
+                                        'KKM ini berlaku untuk guru, mapel, dan tahun ajaran yang sama.'
+                                    ),
+
+                                Forms\Components\Textarea::make('deskripsi')
+                                    ->label('Deskripsi')
+                                    ->rows(4)
+                                    ->maxLength(1000)
+                                    ->required()
+                                    ->columnSpanFull()
+                                    ->helperText(
+                                        'Deskripsi ini akan diterapkan kepada seluruh siswa pada kelas ini.'
+                                    ),
+                            ])
+                            ->columns(2),
+
+                        Forms\Components\Section::make('Nilai Siswa')
+                            ->description(
+                                'Indeks ketercapaian dihitung otomatis berdasarkan nilai angka.'
+                            )
+                            ->schema([
+                                Forms\Components\Repeater::make('nilai_siswa')
+                                    ->label('')
+                                    ->schema([
+                                        Forms\Components\Hidden::make('siswa_id')
+                                            ->required(),
+
+                                        Forms\Components\TextInput::make('nisn')
+                                            ->label('NISN')
+                                            ->disabled()
+                                            ->dehydrated(false),
+
+                                        Forms\Components\TextInput::make('nama_lengkap')
+                                            ->label('Nama Siswa')
+                                            ->disabled()
+                                            ->dehydrated(false),
+
+                                        Forms\Components\TextInput::make('nilai_angka')
+                                            ->label('Nilai')
+                                            ->numeric()
+                                            ->integer()
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->required()
+                                            ->live(onBlur: true),
+
+                                        Forms\Components\Placeholder::make(
+                                            'indeks_preview',
+                                        )
+                                            ->label('Ketercapaian')
+                                            ->content(
+                                                fn (Get $get): string => static::indeksPreview(
+                                                    $get('nilai_angka'),
+                                                ),
+                                            ),
+                                    ])
+                                    ->columns(4)
+                                    ->addable(false)
+                                    ->deletable(false)
+                                    ->reorderable(false)
+                                    ->columnSpanFull(),
+                            ]),
+                    ])
+                    ->action(function (array $data): void {
+                        $jumlahNilai = app(NilaiBatchService::class)->save(
+                            $this->jadwalMengajar,
+                            $data['kkm'] ?? null,
+                            (string) ($data['deskripsi'] ?? ''),
+                            is_array($data['nilai_siswa'] ?? null)
+                                ? $data['nilai_siswa']
+                                : [],
+                        );
+
+                        $this->resetTable();
+
+                        Notification::make()
+                            ->title('Nilai siswa berhasil disimpan.')
+                            ->body(
+                                sprintf(
+                                    '%d nilai siswa telah diperbarui.',
+                                    $jumlahNilai,
+                                ),
+                            )
+                            ->success()
+                            ->send();
+                    }),
+            ])
+            ->columns([
+                Tables\Columns\TextColumn::make('nisn')
+                    ->label('NISN')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('nama_lengkap')
+                    ->label('Nama')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('nilai')
+                    ->label('Nilai')
+                    ->badge()
+                    ->state(fn (Siswa $record): string => (string) (
+                        $this->nilaiSiswa($record)?->nilai_angka ?? 'Belum diisi'
+                    ))
+                    ->color(fn (Siswa $record): string => $this->nilaiSiswa($record) === null
+                        ? 'gray'
+                        : 'success'),
+
+                Tables\Columns\TextColumn::make('indeks_ketercapaian')
+                    ->label('Ketercapaian')
+                    ->badge()
+                    ->state(fn (Siswa $record): string => $this->nilaiSiswa(
+                        $record,
+                    )?->indeks_ketercapaian ?? 'Belum diisi')
+                    ->color(fn (Siswa $record): string => static::indeksColor(
+                        $this->nilaiSiswa($record)?->indeks_ketercapaian,
+                    )),
+
+                Tables\Columns\TextColumn::make('deskripsi_nilai')
+                    ->label('Deskripsi')
+                    ->state(fn (Siswa $record): string => $this->nilaiSiswa(
+                        $record,
+                    )?->deskripsi ?: 'Belum diisi')
+                    ->wrap()
+                    ->limit(80),
+            ])
+            ->emptyStateHeading('Belum ada siswa pada kelas ini.');
+    }
+
+    private function deskripsiLanjutanSaatIni(): ?string
+    {
+        $deskripsi = Nilai::query()
+            ->where(
+                'jadwal_mengajar_id',
+                $this->jadwalMengajar->getKey(),
+            )
+            ->orderBy('id')
+            ->value('deskripsi');
+
+        if (blank($deskripsi)) {
+            return null;
+        }
+
+        return preg_replace(
+            '/^Siswa memiliki keterampilan yang (?:SANGAT BAIK|BAIK|CUKUP|KURANG) dalam\s+/u',
+            '',
+            (string) $deskripsi,
+        ) ?? (string) $deskripsi;
+    }
+
+    private static function indeksPreview(mixed $nilaiAngka): string
+    {
+        if (! is_numeric($nilaiAngka)) {
+            return 'Belum diisi';
+        }
+
+        return match (true) {
+            (int) $nilaiAngka >= 90 => 'Sangat Baik',
+            (int) $nilaiAngka >= 80 => 'Baik',
+            (int) $nilaiAngka >= 70 => 'Cukup',
+            default => 'Kurang',
+        };
+    }
+
+    private static function indeksColor(?string $indeks): string
+    {
+        return match ($indeks) {
+            'Sangat Baik' => 'success',
+            'Baik' => 'info',
+            'Cukup' => 'warning',
+            'Kurang' => 'danger',
+            default => 'gray',
+        };
+    }
+
+    private static function canManageJadwal(JadwalMengajar $jadwalMengajar): bool
+    {
+        $user = auth()->user();
+
+        if ($user?->isAdmin()) {
+            return true;
+        }
+
+        return $user?->isGuru()
+            && $user->guru?->can_input_nilai === true
+            && (int) $user->guru?->getKey() === (int) $jadwalMengajar->guru_id;
+    }
+
+    private static function jadwalYangBolehDiakses(): Builder
+    {
+        $query = JadwalMengajar::query()
+            ->with([
+                'guru.user',
+                'mataPelajaran',
+                'kelas',
+                'tahunAjaran',
+            ])
+            ->orderBy('kelas_id')
+            ->orderBy('mapel_id');
+
+        $tahunAjaranAktifId = TahunAjaran::query()
+            ->where('is_active', true)
+            ->value('id');
+
+        if ($tahunAjaranAktifId !== null) {
+            $query->where('tahun_ajaran_id', $tahunAjaranAktifId);
+        }
+
+        $user = auth()->user();
+
+        if ($user?->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where('guru_id', $user?->guru?->getKey() ?? 0);
+    }
+
+    private static function navigationLabel(JadwalMengajar $jadwalMengajar): string
+    {
+        $label = sprintf(
+            '%s — %s',
+            $jadwalMengajar->mataPelajaran?->nama_mapel ?? 'Mata Pelajaran',
+            $jadwalMengajar->kelas?->nama_kelas ?? 'Kelas',
+        );
+
+        if (auth()->user()?->isAdmin()) {
+            return sprintf(
+                '%s • %s',
+                $jadwalMengajar->guru?->nama ?? 'Guru',
+                $label,
+            );
+        }
+
+        return $label;
+    }
+
+    private function nilaiSiswa(Siswa $siswa): ?Nilai
+    {
+        return $siswa->nilais->first();
+    }
+}

@@ -1,0 +1,648 @@
+:root {
+    --raport-primary: #2563eb;
+    --raport-primary-hover: #1d4ed8;
+
+    --raport-light-page: #f6f8fc;
+    --raport-light-surface: #ffffff;
+    --raport-light-border: #e2e8f0;
+    --raport-light-text: #172033;
+    --raport-light-muted: #64748b;
+
+    --raport-dark-page: #0b1220;
+    --raport-dark-surface: #121c2d;
+    --raport-dark-border: #2a3a52;
+    --raport-dark-text: #f1f5f9;
+    --raport-dark-muted: #9eacc2;
+
+    --raport-sidebar-dark: #101a2c;
+    --raport-sidebar-dark-deep: #0b1424;
+}
+
+/* Global */
+
+.fi-body {
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+html:not(.dark) .fi-body {
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(37, 99, 235, 0.08),
+            transparent 30rem
+        ),
+        var(--raport-light-page);
+    color: var(--raport-light-text);
+}
+
+html.dark .fi-body {
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(37, 99, 235, 0.08),
+            transparent 34rem
+        ),
+        var(--raport-dark-page);
+    color: var(--raport-dark-text);
+}
+
+/* Sidebar */
+
+.fi-sidebar {
+    box-shadow: 10px 0 28px rgba(15, 23, 42, 0.06);
+}
+
+html:not(.dark) .fi-sidebar {
+    background: var(--raport-light-surface);
+    border-inline-end: 1px solid var(--raport-light-border);
+}
+
+html.dark .fi-sidebar {
+    background:
+        linear-gradient(
+            180deg,
+            var(--raport-sidebar-dark),
+            var(--raport-sidebar-dark-deep)
+        );
+    border-inline-end: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.fi-sidebar-header {
+    min-height: 5rem;
+    padding-inline: 1.25rem;
+}
+
+html:not(.dark) .fi-sidebar-header {
+    background: var(--raport-light-surface);
+    border-bottom: 1px solid var(--raport-light-border);
+}
+
+html.dark .fi-sidebar-header {
+    background: var(--raport-sidebar-dark);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.fi-sidebar-header > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.fi-sidebar .fi-logo {
+    width: 100%;
+}
+
+/* Sidebar navigation */
+
+.fi-sidebar-nav {
+    padding: 1.1rem 0.75rem 1.5rem;
+}
+
+.fi-sidebar-group {
+    margin-bottom: 1.1rem;
+}
+
+.fi-sidebar-group-label {
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+html:not(.dark) .fi-sidebar-group-label {
+    color: #64748b !important;
+}
+
+html.dark .fi-sidebar-group-label {
+    color: #93a4c7 !important;
+}
+
+.fi-sidebar .fi-sidebar-item-button {
+    border-radius: 0.7rem;
+    margin-bottom: 0.15rem;
+    min-height: 2.65rem;
+    padding-inline: 0.75rem;
+    transition:
+        background-color 0.16s ease,
+        transform 0.16s ease;
+}
+
+.fi-sidebar .fi-sidebar-item-button:hover {
+    transform: translateX(2px);
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item-label {
+    color: #334155 !important;
+    font-weight: 500;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item-icon {
+    color: #64748b !important;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item-button:hover {
+    background: #f1f5f9 !important;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-button {
+    background: #eff6ff !important;
+    box-shadow: inset 3px 0 0 #2563eb;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label {
+    color: #1d4ed8 !important;
+    font-weight: 700;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: #2563eb !important;
+}
+
+html.dark .fi-sidebar .fi-sidebar-item-label {
+    color: #dbeafe !important;
+    font-weight: 500;
+}
+
+html.dark .fi-sidebar .fi-sidebar-item-icon {
+    color: #93c5fd !important;
+}
+
+html.dark .fi-sidebar .fi-sidebar-item-button:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-button {
+    background: rgba(59, 130, 246, 0.18) !important;
+    box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+html.dark .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+html.dark .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: #bfdbfe !important;
+}
+
+/* Topbar */
+
+.fi-topbar nav {
+    backdrop-filter: blur(16px);
+    box-shadow: none;
+}
+
+html:not(.dark) .fi-topbar nav {
+    background: rgba(255, 255, 255, 0.88);
+    border-bottom: 1px solid var(--raport-light-border);
+}
+
+html.dark .fi-topbar nav {
+    background: rgba(16, 26, 44, 0.9);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+/* Page heading */
+
+.fi-page-header-heading {
+    font-size: clamp(1.55rem, 2vw, 2rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.035em;
+}
+
+html:not(.dark) .fi-page-header-heading {
+    color: var(--raport-light-text);
+}
+
+html.dark .fi-page-header-heading {
+    color: var(--raport-dark-text);
+}
+
+/* Cards, sections, tables */
+
+.fi-section,
+.fi-ta,
+.fi-wi-stats-overview-stat,
+.fi-modal-window {
+    border-radius: 1rem !important;
+    overflow: hidden;
+}
+
+html:not(.dark) .fi-section,
+html:not(.dark) .fi-ta,
+html:not(.dark) .fi-wi-stats-overview-stat,
+html:not(.dark) .fi-modal-window {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid var(--raport-light-border);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.045);
+}
+
+html.dark .fi-section,
+html.dark .fi-ta,
+html.dark .fi-wi-stats-overview-stat,
+html.dark .fi-modal-window {
+    background: var(--raport-dark-surface);
+    border: 1px solid var(--raport-dark-border);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.fi-section-header {
+    padding: 1.1rem 1.35rem 0.85rem;
+}
+
+.fi-section-content {
+    padding: 1.2rem 1.35rem 1.35rem;
+}
+
+/* Statistik dashboard */
+
+.fi-wi-stats-overview-stat {
+    position: relative;
+}
+
+.fi-wi-stats-overview-stat::before {
+    background: #2563eb;
+    content: "";
+    inset: 1rem auto 1rem 0;
+    position: absolute;
+    width: 3px;
+}
+
+.fi-wi-stats-overview-stat-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+html:not(.dark) .fi-wi-stats-overview-stat-label {
+    color: var(--raport-light-muted);
+}
+
+html.dark .fi-wi-stats-overview-stat-label {
+    color: var(--raport-dark-muted);
+}
+
+.fi-wi-stats-overview-stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+/* Form */
+
+.fi-fo-field-wrp-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+html:not(.dark) .fi-fo-field-wrp-label {
+    color: #334155;
+}
+
+html.dark .fi-fo-field-wrp-label {
+    color: #e2e8f0;
+}
+
+.fi-input-wrp {
+    border-radius: 0.7rem;
+    transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease;
+}
+
+.fi-input-wrp:focus-within {
+    border-color: var(--raport-primary) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.13);
+}
+
+/* Buttons */
+
+.fi-btn {
+    border-radius: 0.7rem !important;
+    font-weight: 700;
+    transition:
+        box-shadow 0.16s ease,
+        transform 0.16s ease;
+}
+
+.fi-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.fi-btn.fi-color-primary:not(.fi-btn-outlined) {
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    ) !important;
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+}
+
+/* Tabel */
+
+html:not(.dark) .fi-ta-table thead tr {
+    background: #f8fafc;
+}
+
+html.dark .fi-ta-table thead tr {
+    background: rgba(30, 41, 59, 0.55);
+}
+
+.fi-ta-table thead th {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+}
+
+html:not(.dark) .fi-ta-table thead th {
+    color: #64748b;
+}
+
+html.dark .fi-ta-table thead th {
+    color: #a8b7cd;
+}
+
+html:not(.dark) .fi-ta-table tbody tr:hover {
+    background: rgba(37, 99, 235, 0.035);
+}
+
+html.dark .fi-ta-table tbody tr:hover {
+    background: rgba(96, 165, 250, 0.055);
+}
+
+/* Login */
+
+.fi-simple-layout {
+    background:
+        radial-gradient(
+            circle at 15% 10%,
+            rgba(59, 130, 246, 0.18),
+            transparent 28rem
+        ),
+        linear-gradient(135deg, #0b1730, #17336a);
+}
+
+.fi-simple-layout::before {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+.fi-simple-layout > * {
+    position: relative;
+    z-index: 1;
+}
+
+.fi-simple-main {
+    border-radius: 1.35rem !important;
+}
+
+html.dark .fi-simple-main {
+    background: rgba(18, 28, 45, 0.97) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.fi-simple-header .fi-logo {
+    height: 3rem !important;
+    justify-content: center;
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .fi-section-header,
+    .fi-section-content {
+        padding-inline: 1rem;
+    }
+
+    .raport-brand__subtitle {
+        display: none;
+    }
+
+    /* Perbaikan warna sidebar desktop */
+
+@media (min-width: 1024px) {
+    html:not(.dark) .fi-sidebar {
+        background: #ffffff !important;
+        border-inline-end: 1px solid #e2e8f0 !important;
+    }
+
+    html:not(.dark) .fi-sidebar-header {
+        background: #ffffff !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    html.dark .fi-sidebar {
+        background: linear-gradient(180deg, #101a2c, #0b1424) !important;
+    }
+
+    html.dark .fi-sidebar-header {
+        background: #101a2c !important;
+    }
+}
+
+.raport-user-menu-identity {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+}
+
+.raport-user-menu-identity__avatar {
+    align-items: center;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-radius: 999px;
+    color: #ffffff;
+    display: inline-flex;
+    flex: none;
+    font-size: 0.9rem;
+    font-weight: 800;
+    height: 2.4rem;
+    justify-content: center;
+    width: 2.4rem;
+}
+
+.raport-user-menu-identity__content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.raport-user-menu-identity__name {
+    font-size: 0.86rem;
+    font-weight: 750;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.raport-user-menu-identity__role {
+    font-size: 0.72rem;
+    margin-top: 0.15rem;
+}
+
+html:not(.dark) .raport-user-menu-identity {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+html:not(.dark) .raport-user-menu-identity__name {
+    color: #0f172a;
+}
+
+html:not(.dark) .raport-user-menu-identity__role {
+    color: #64748b;
+}
+
+html.dark .raport-user-menu-identity {
+    border-bottom: 1px solid #2a3a52;
+}
+
+html.dark .raport-user-menu-identity__name {
+    color: #f8fafc;
+}
+
+html.dark .raport-user-menu-identity__role {
+    color: #9eacc2;
+}
+
+/* SweetAlert2 - Konfirmasi Logout */
+
+.swal2-container {
+    z-index: 99999 !important;
+}
+
+.swal2-container .swal2-popup.raport-swal-popup {
+    border-radius: 1.25rem !important;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28) !important;
+    padding: 1.75rem 1.6rem 1.6rem !important;
+    width: min(29rem, calc(100vw - 2rem)) !important;
+}
+
+html:not(.dark) .swal2-container .swal2-popup.raport-swal-popup {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+html.dark .swal2-container .swal2-popup.raport-swal-popup,
+body.dark .swal2-container .swal2-popup.raport-swal-popup {
+    background: #121c2d !important;
+    border: 1px solid #2a3a52 !important;
+}
+
+.swal2-container .raport-swal-title {
+    color: #172033 !important;
+    font-size: 1.3rem !important;
+    font-weight: 800 !important;
+    line-height: 1.3 !important;
+    margin-top: 0.3rem !important;
+}
+
+html.dark .swal2-container .raport-swal-title,
+body.dark .swal2-container .raport-swal-title {
+    color: #f8fafc !important;
+}
+
+.swal2-container .raport-swal-content {
+    color: #64748b !important;
+    font-size: 0.9rem !important;
+    line-height: 1.55 !important;
+    margin-top: 0.55rem !important;
+}
+
+html.dark .swal2-container .raport-swal-content,
+body.dark .swal2-container .raport-swal-content {
+    color: #a8b7cd !important;
+}
+
+.swal2-container .swal2-actions {
+    display: flex !important;
+    gap: 0.75rem !important;
+    justify-content: center !important;
+    margin: 1.5rem 0 0 !important;
+    width: 100% !important;
+}
+
+@media (max-width: 480px) {
+    .swal2-container .swal2-actions {
+        flex-direction: column-reverse !important;
+    }
+}
+
+/* Identitas pengguna di topbar */
+
+.fi-topbar .raport-topbar-user-summary {
+    align-content: center !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto !important;
+    justify-items: end !important;
+    line-height: 1.15 !important;
+    margin-inline: 0.5rem 0.3rem !important;
+    min-width: 10rem !important;
+    text-align: right !important;
+}
+
+.fi-topbar .raport-topbar-user-summary__greeting,
+.fi-topbar .raport-topbar-user-summary__role {
+    display: block !important;
+    grid-column: 1 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+.fi-topbar .raport-topbar-user-summary__greeting {
+    font-size: 1.5rem !important;
+    font-weight: 750 !important;
+    /* white-space: nowrap; */
+}
+
+.fi-topbar .raport-topbar-user-summary__role {
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    margin-top: 0.12rem !important;
+    /* white-space: nowrap; */
+}
+
+html:not(.dark) .fi-topbar .raport-topbar-user-summary__greeting {
+    color: #1e293b !important;
+}
+
+html:not(.dark) .fi-topbar .raport-topbar-user-summary__role {
+    color: #64748b !important;
+}
+
+html.dark .fi-topbar .raport-topbar-user-summary__greeting {
+    color: #f8fafc !important;
+}
+
+html.dark .fi-topbar .raport-topbar-user-summary__role {
+    color: #a8b7cd !important;
+}
+
+@media (max-width: 768px) {
+    .fi-topbar .raport-topbar-user-summary {
+        display: none !important;
+    }
+}
+
+/* Ukuran foto profil pada header */
+
+.fi-user-avatar {
+    height: 2.75rem !important;
+    width: 2.75rem !important;
+    min-height: 2.75rem !important;
+    min-width: 2.75rem !important;
+    max-height: 2.75rem !important;
+    max-width: 2.75rem !important;
+    object-fit: cover !important;
+}
