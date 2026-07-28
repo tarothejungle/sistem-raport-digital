@@ -2,11 +2,18 @@
 
 namespace App\Filament\Admin\Pages\Auth;
 
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Pages\Auth\EditProfile as BaseEditProfile;
+use App\Models\User;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 
-class EditProfile extends BaseEditProfile
+class EditProfile extends \Filament\Auth\Pages\EditProfile
 {
     public static function getLabel(): string
     {
@@ -23,14 +30,14 @@ class EditProfile extends BaseEditProfile
         return 'Kelola identitas akun dan foto profil Anda.';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Section::make('Foto Profil')
+        return $schema->components([
+            Section::make('Foto Profil')
                 ->description('Gunakan foto wajah yang jelas agar akun mudah dikenali.')
                 ->schema([
-                    Forms\Components\FileUpload::make('avatar_path')
-                        ->label('Foto Profil')
+                    FileUpload::make('avatar_path')
+                        ->label('Upload Foto')
                         ->image()
                         ->avatar()
                         ->imageEditor()
@@ -43,9 +50,10 @@ class EditProfile extends BaseEditProfile
                         ->maxSize(2048)
                         ->helperText('Format JPG, JPEG, PNG, atau WEBP. Maksimal 2 MB.')
                         ->columnSpanFull(),
-                ]),
+                ])
+                ->columnSpanFull(),
 
-            Forms\Components\Section::make('Informasi Akun')
+            Section::make('Informasi Akun')
                 ->description('Perbarui nama dan email yang digunakan pada akun ini.')
                 ->schema([
                     $this->getNameFormComponent()
@@ -56,32 +64,107 @@ class EditProfile extends BaseEditProfile
                         ->label('Email')
                         ->prefixIcon('heroicon-o-envelope'),
 
-                    Forms\Components\Placeholder::make('role')
+                    Placeholder::make('role')
                         ->label('Peran Akun')
                         ->content(fn (): string => $this->roleLabel())
                         ->columnSpanFull(),
                 ])
-                ->columns(2),
+                ->columns(2)
+                ->columnSpanFull(),
+
+            Section::make('Data Guru')
+                ->description('Lengkapi data diri yang ditampilkan pada dashboard guru.')
+                ->schema([
+                    TextInput::make('guru.no_telp')
+                        ->label('Nomor Handphone')
+                        ->tel()
+                        ->maxLength(15),
+
+                    TextInput::make('guru.tempat_lahir')
+                        ->label('Tempat Lahir')
+                        ->maxLength(100),
+
+                    DatePicker::make('guru.tanggal_lahir')
+                        ->label('Tanggal Lahir')
+                        ->native(false),
+
+                    TextInput::make('guru.pendidikan_terakhir')
+                        ->label('Pendidikan Terakhir')
+                        ->maxLength(100)
+                        ->placeholder('Contoh: S1 Pendidikan Agama Islam'),
+                ])
+                ->columns(2)
+                ->columnSpanFull()
+                ->visible(fn (): bool => auth()->user()?->isGuru() ?? false),
         ]);
     }
 
     /**
-     * Memaksa label field berada di atas input,
-     * bukan sejajar jauh di sisi kiri.
-     *
-     * @return array<string, Form>
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
      */
-    protected function getForms(): array
+    protected function mutateFormDataBeforeFill(array $data): array
     {
-        return [
-            'form' => $this->form(
-                $this->makeForm()
-                    ->operation('edit')
-                    ->model($this->getUser())
-                    ->statePath('data')
-                    ->inlineLabel(false),
-            ),
-        ];
+        $user = $this->getUser();
+
+        if ($user instanceof User && $user->isGuru()) {
+            $user->loadMissing('guru');
+            $data['guru'] = $user->guru?->only([
+                'no_telp',
+                'tempat_lahir',
+                'tanggal_lahir',
+                'pendidikan_terakhir',
+            ]) ?? [];
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        $guruData = Arr::pull($data, 'guru', []);
+
+        $record->update($data);
+
+        if ($record instanceof User && $record->isGuru() && $record->guru !== null) {
+            $record->guru->update(Arr::only($guruData, [
+                'no_telp',
+                'tempat_lahir',
+                'tanggal_lahir',
+                'pendidikan_terakhir',
+            ]));
+        }
+
+        return $record;
+    }
+
+    public function deleteAvatar(): void
+    {
+        $user = $this->getUser();
+
+        if (! $user instanceof User || blank($user->avatar_path)) {
+            return;
+        }
+
+        Storage::disk('public')->delete($user->avatar_path);
+
+        $user->update([
+            'avatar_path' => null,
+        ]);
+
+        $this->data['avatar_path'] = null;
+    }
+
+    /**
+     * Keep form labels above their controls in the profile page.
+     */
+    public function defaultForm(Schema $schema): Schema
+    {
+        return parent::defaultForm($schema)
+            ->inlineLabel(false);
     }
 
     private function roleLabel(): string

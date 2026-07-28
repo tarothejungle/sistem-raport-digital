@@ -3,15 +3,24 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\Concerns\AdminOnlyResource;
-use App\Filament\Admin\Resources\KelasResource\Pages;
+use App\Filament\Admin\Resources\KelasResource\Pages\CreateKelas;
+use App\Filament\Admin\Resources\KelasResource\Pages\EditKelas;
+use App\Filament\Admin\Resources\KelasResource\Pages\ListKelas;
 use App\Models\Guru;
 use App\Models\Kelas;
-use Filament\Forms;
-use Filament\Forms\Form;
+use App\Services\KelasService;
+use Filament\Actions\BulkAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Validation\ValidationException;
 
 class KelasResource extends Resource
 {
@@ -19,27 +28,27 @@ class KelasResource extends Resource
 
     protected static ?string $model = Kelas::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-library';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-library';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $modelLabel = 'Kelas';
+    protected static ?string $modelLabel = 'Data Kelas';
 
-    protected static ?string $pluralModelLabel = 'Kelas';
+    protected static ?string $pluralModelLabel = 'Data Kelas';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\TextInput::make('nama_kelas')
+        return $schema->components([
+            TextInput::make('nama_kelas')
                 ->label('Nama Kelas')
                 ->required()
                 ->maxLength(100)
                 ->unique(ignoreRecord: true)
                 ->autofocus(),
 
-            Forms\Components\TextInput::make('tingkat')
+            TextInput::make('tingkat')
                 ->label('Tingkat')
                 ->numeric()
                 ->integer()
@@ -47,7 +56,7 @@ class KelasResource extends Resource
                 ->maxValue(12)
                 ->required(),
 
-            Forms\Components\Select::make('wali_kelas_id')
+            Select::make('wali_kelas_id')
                 ->label('Wali Kelas')
                 ->options(static fn (): array => Guru::query()
                     ->with('user')
@@ -60,7 +69,7 @@ class KelasResource extends Resource
                             $guru->user?->username ?? '-',
                         ),
                     ])
-                ->all())
+                    ->all())
                 ->searchable()
                 ->preload()
                 ->placeholder('Belum ditentukan'),
@@ -72,57 +81,93 @@ class KelasResource extends Resource
         return $table
             ->defaultSort('tingkat')
             ->columns([
-                Tables\Columns\TextColumn::make('nama_kelas')
+                TextColumn::make('nama_kelas')
                     ->label('Kelas')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('tingkat')
+                TextColumn::make('tingkat')
                     ->label('Tingkat')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('waliKelas.nama')
+                TextColumn::make('waliKelas.nama')
                     ->label('Wali Kelas')
                     ->placeholder('-')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('siswas_count')
-                    ->label('Jumlah Siswa')
-                    ->counts('siswas')
+                TextColumn::make('siswa_aktif_count')
+                    ->label('Siswa Aktif')
+                    ->counts('siswaAktif')
                     ->badge(),
-                Tables\Columns\TextColumn::make('jadwal_mengajars_count')
+                TextColumn::make('jadwal_mengajars_count')
                     ->label('Jadwal')
                     ->counts('jadwalMengajars')
                     ->badge(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('tingkat')
+                SelectFilter::make('tingkat')
                     ->options(collect(range(1, 12))->mapWithKeys(
                         static fn (int $tingkat): array => [$tingkat => "Tingkat {$tingkat}"],
                     )->all()),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
-                    ->before(function (Tables\Actions\DeleteAction $action, Kelas $record): void {
-                        if (! $record->siswas()->exists() && ! $record->jadwalMengajars()->exists()) {
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
+                    ->before(function (DeleteAction $action, Kelas $record): void {
+                        if (
+                            ! $record->siswas()->exists()
+                            && ! $record->jadwalMengajars()->exists()
+                            && ! $record->riwayatKelasSiswas()->exists()
+                        ) {
                             return;
                         }
 
                         Notification::make()
                             ->danger()
                             ->title('Kelas tidak dapat dihapus')
-                            ->body('Hapus atau pindahkan data siswa dan jadwal mengajar yang masih terkait terlebih dahulu.')
+                            ->body('Hapus atau pindahkan data siswa, jadwal mengajar, dan riwayat kelas yang masih terkait terlebih dahulu.')
                             ->send();
 
                         $action->cancel();
-                    }),
+                    })
+                    ->using(static fn (Kelas $record): bool => app(KelasService::class)->delete($record)),
+            ])
+            ->toolbarActions([
+                BulkAction::make('deleteSelected')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus kelas terpilih?')
+                    ->modalDescription('Kelas yang masih memiliki siswa, jadwal mengajar, atau riwayat kelas tidak akan dihapus.')
+                    ->modalSubmitActionLabel('Ya, hapus')
+                    ->action(function ($records): void {
+                        $deleted = 0;
+                        $blocked = 0;
+
+                        foreach ($records as $record) {
+                            try {
+                                if (app(KelasService::class)->delete($record)) {
+                                    $deleted++;
+                                }
+                            } catch (ValidationException) {
+                                $blocked++;
+                            }
+                        }
+
+                        $notification = Notification::make()
+                            ->title($blocked > 0 ? 'Sebagian kelas tidak dapat dihapus' : 'Kelas terpilih berhasil dihapus')
+                            ->body("{$deleted} kelas dihapus. {$blocked} kelas dilewati karena masih memiliki data terkait.");
+
+                        ($blocked > 0 ? $notification->warning() : $notification->success())->send();
+                    })
+                    ->deselectRecordsAfterCompletion(),
             ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListKelas::route('/'),
-            'create' => Pages\CreateKelas::route('/create'),
-            'edit' => Pages\EditKelas::route('/{record}/edit'),
+            'index' => ListKelas::route('/'),
+            'create' => CreateKelas::route('/create'),
+            'edit' => EditKelas::route('/{record}/edit'),
         ];
     }
 }

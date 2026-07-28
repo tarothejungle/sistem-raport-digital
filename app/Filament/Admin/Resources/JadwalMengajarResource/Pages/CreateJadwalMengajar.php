@@ -8,12 +8,15 @@ use App\Models\JadwalMengajar;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
 use App\Models\TahunAjaran;
-use Filament\Actions\Action;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -37,13 +40,13 @@ class CreateJadwalMengajar extends CreateRecord
         ]);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Section::make('Kelas dan Tahun Ajaran')
+        return $schema->components([
+            Section::make('Kelas dan Tahun Ajaran')
                 ->description('Pilih kelas dan tahun ajaran untuk melihat atau memperbarui pengajar.')
                 ->schema([
-                    Forms\Components\Select::make('kelas_id')
+                    Select::make('kelas_id')
                         ->label('Kelas')
                         ->options(
                             Kelas::query()
@@ -62,7 +65,7 @@ class CreateJadwalMengajar extends CreateRecord
                             ));
                         }),
 
-                    Forms\Components\Select::make('tahun_ajaran_id')
+                    Select::make('tahun_ajaran_id')
                         ->label('Tahun Ajaran')
                         ->options(
                             TahunAjaran::query()
@@ -85,23 +88,24 @@ class CreateJadwalMengajar extends CreateRecord
                             ));
                         }),
                 ])
-                ->columns(2),
+                ->columns(2)
+                ->columnSpanFull(),
 
-            Forms\Components\Section::make('Mata Pelajaran dan Guru Pengampu')
+            Section::make('Mata Pelajaran dan Guru Pengampu')
                 ->description('Ganti guru yang diperlukan, lalu simpan seluruh penugasan kelas.')
                 ->schema([
-                    Forms\Components\Repeater::make('penugasan')
+                    Repeater::make('penugasan')
                         ->label('')
                         ->schema([
-                            Forms\Components\Hidden::make('mapel_id')
+                            Hidden::make('mapel_id')
                                 ->required(),
 
-                            Forms\Components\TextInput::make('nama_mapel')
+                            TextInput::make('nama_mapel')
                                 ->label('Mata Pelajaran')
                                 ->disabled()
                                 ->dehydrated(false),
 
-                            Forms\Components\Select::make('guru_id')
+                            Select::make('guru_id')
                                 ->label('Guru Pengampu')
                                 ->options(
                                     Guru::query()
@@ -128,12 +132,13 @@ class CreateJadwalMengajar extends CreateRecord
                         ->deletable(false)
                         ->reorderable(false)
                         ->columnSpanFull(),
-                ]),
+                ])
+                ->columnSpanFull(),
         ]);
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     protected function handleRecordCreation(array $data): Model
     {

@@ -13,8 +13,7 @@ final class NilaiBatchService
 {
     public function __construct(
         private readonly NilaiService $nilaiService,
-    ) {
-    }
+    ) {}
 
     /**
      * Menyusun seluruh siswa kelas beserta nilai yang pernah disimpan.
@@ -34,8 +33,11 @@ final class NilaiBatchService
             ->get()
             ->keyBy('siswa_id');
 
-        return Siswa::query()
-            ->where('kelas_id', $jadwalMengajar->kelas_id)
+        return app(KenaikanKelasService::class)
+            ->siswaUntukKelasTahunQuery(
+                (int) $jadwalMengajar->kelas_id,
+                (int) $jadwalMengajar->tahun_ajaran_id,
+            )
             ->orderBy('nama_lengkap')
             ->get()
             ->map(function (Siswa $siswa) use ($nilaiBySiswa): array {
@@ -59,7 +61,7 @@ final class NilaiBatchService
     }
 
     /**
-     * @param array<int, array{siswa_id: int|string, nilai_angka: int|string|null}> $nilaiSiswa
+     * @param  array<int, array{siswa_id: int|string, nilai_angka: int|string|null}>  $nilaiSiswa
      */
     public function save(
         JadwalMengajar $jadwalMengajar,
@@ -93,8 +95,11 @@ final class NilaiBatchService
             ->unique()
             ->values();
 
-        $jumlahSiswaKelas = Siswa::query()
-            ->where('kelas_id', $jadwalMengajar->kelas_id)
+        $jumlahSiswaKelas = app(KenaikanKelasService::class)
+            ->siswaUntukKelasTahunQuery(
+                (int) $jadwalMengajar->kelas_id,
+                (int) $jadwalMengajar->tahun_ajaran_id,
+            )
             ->whereIn('id', $siswaIds)
             ->count();
 

@@ -3,12 +3,14 @@
 namespace App\Filament\Admin\Pages\Auth;
 
 use Filament\Actions\Action;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\TextInput;
+use Filament\Pages\PageConfiguration;
 use Filament\Panel;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Route;
-use Filament\Pages\Auth\EditProfile as BaseEditProfile;
 
 class ChangePassword extends BaseEditProfile
 {
@@ -21,26 +23,24 @@ class ChangePassword extends BaseEditProfile
         return 'Ganti Kata Sandi';
     }
 
-    public static function getRelativeRouteName(): string
+    public static function getRelativeRouteName(Panel $panel): string
     {
         return 'change-password';
     }
 
-    public static function registerRoutes(Panel $panel): void
+    public static function registerRoutes(Panel $panel, ?PageConfiguration $configuration = null): void
     {
-        Route::name('pages.')->group(function () use ($panel): void {
-            static::routes($panel);
+        Route::name('pages.')->group(function () use ($panel, $configuration): void {
+            static::routes($panel, $configuration);
         });
     }
 
-    public static function getRouteName(?string $panel = null): string
+    public static function getRouteName(?Panel $panel = null): string
     {
-        $panel = $panel
-            ? Filament::getPanel($panel)
-            : Filament::getCurrentPanel();
+        $panel ??= Filament::getCurrentOrDefaultPanel();
 
         return $panel->generateRouteName(
-            'pages.'.static::getRelativeRouteName(),
+            'pages.'.static::getRelativeRouteName($panel),
         );
     }
 
@@ -54,13 +54,13 @@ class ChangePassword extends BaseEditProfile
         return 'Masukkan kata sandi saat ini, lalu buat kata sandi baru untuk akun Anda.';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Section::make('Keamanan Akun')
+        return $schema->components([
+            Section::make('Keamanan Akun')
                 ->description('Gunakan kata sandi yang kuat dan jangan membagikannya kepada orang lain.')
                 ->schema([
-                    Forms\Components\TextInput::make('current_password')
+                    TextInput::make('current_password')
                         ->label('Kata Sandi Saat Ini')
                         ->password()
                         ->revealable(filament()->arePasswordsRevealable())
@@ -83,23 +83,13 @@ class ChangePassword extends BaseEditProfile
         ]);
     }
 
-     /**
-     * Memaksa label field berada di atas input,
-     * bukan sejajar jauh di sisi kiri.
-     *
-     * @return array<string, Form>
+    /**
+     * Keep form labels above their controls in the password page.
      */
-    protected function getForms(): array
+    public function defaultForm(Schema $schema): Schema
     {
-        return [
-            'form' => $this->form(
-                $this->makeForm()
-                    ->operation('edit')
-                    ->model($this->getUser())
-                    ->statePath('data')
-                    ->inlineLabel(false),
-            ),
-        ];
+        return parent::defaultForm($schema)
+            ->inlineLabel(false);
     }
 
     protected function getSaveFormAction(): Action

@@ -13,7 +13,7 @@ class EditSiswa extends EditRecord
     protected static string $resource = SiswaResource::class;
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeFill(array $data): array
@@ -27,6 +27,7 @@ class EditSiswa extends EditRecord
             'email' => $siswa->user?->email,
         ];
     }
+
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         /** @var Siswa $siswa */

@@ -44,7 +44,17 @@ class TahunAjaran extends Model
     {
         return $this->hasMany(JadwalMengajar::class);
     }
-    
+
+    public function riwayatKelasSiswas(): HasMany
+    {
+        return $this->hasMany(RiwayatKelasSiswa::class);
+    }
+
+    public function alumniSiswas(): HasMany
+    {
+        return $this->hasMany(Siswa::class, 'tahun_lulus_id');
+    }
+
     public function catatanRapors(): HasMany
     {
         return $this->hasMany(CatatanRapor::class);
@@ -52,6 +62,6 @@ class TahunAjaran extends Model
 
     public function getLabelAttribute(): string
     {
-        return sprintf('%s — %s', $this->nama, $this->semester);
+        return sprintf('%s - %s', $this->nama, $this->semester);
     }
 }

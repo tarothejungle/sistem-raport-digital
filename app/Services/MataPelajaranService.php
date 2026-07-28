@@ -4,11 +4,10 @@ namespace App\Services;
 
 use App\Models\MataPelajaran;
 
-
 class MataPelajaranService
 {
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): MataPelajaran
     {

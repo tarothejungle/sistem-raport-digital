@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <testsuite name="Filament Turnstile Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="APP_KEY" value="base64:2fl+KtvkdphvQyEFM8K4eKpQxqGzqZ8Y0vHhQzqzqzq="/>
+        <env name="TURNSTILE_SITE_KEY" value="1x00000000000000000000AA"/>
+        <env name="TURNSTILE_SECRET_KEY" value="1x0000000000000000000000000000000AA"/>
+    </php>
+</phpunit>

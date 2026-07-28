@@ -4,11 +4,10 @@ namespace App\Services;
 
 use App\Models\TahunAjaran;
 
-
 class TahunAjaranService
 {
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): TahunAjaran
     {

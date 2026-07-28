@@ -2,10 +2,10 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\NilaiSiswaResource\Pages;
+use App\Filament\Admin\Resources\NilaiSiswaResource\Pages\ListNilaiSiswas;
 use App\Models\Nilai;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -14,9 +14,9 @@ class NilaiSiswaResource extends Resource
 {
     protected static ?string $model = Nilai::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Portal Siswa';
+    protected static string|\UnitEnum|null $navigationGroup = 'Portal Siswa';
 
     protected static ?int $navigationSort = 1;
 
@@ -73,20 +73,20 @@ class NilaiSiswaResource extends Resource
         return $table
             ->defaultSort('updated_at', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('jadwalMengajar.mataPelajaran.kelompok')
+                TextColumn::make('jadwalMengajar.mataPelajaran.kelompok')
                     ->label('Kelompok')
                     ->badge(),
-                Tables\Columns\TextColumn::make('jadwalMengajar.mataPelajaran.nama_mapel')
+                TextColumn::make('jadwalMengajar.mataPelajaran.nama_mapel')
                     ->label('Mata Pelajaran')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('jadwalMengajar.guru.user.name')
+                TextColumn::make('jadwalMengajar.guru.user.name')
                     ->label('Guru'),
-                Tables\Columns\TextColumn::make('kkm')
+                TextColumn::make('kkm')
                     ->label('KKM'),
-                Tables\Columns\TextColumn::make('nilai_angka')
+                TextColumn::make('nilai_angka')
                     ->label('Angka')
                     ->badge(),
-                Tables\Columns\TextColumn::make('predikat')
+                TextColumn::make('predikat')
                     ->label('Predikat')
                     ->badge()
                     ->color(static fn (?string $state): string => match ($state) {
@@ -96,10 +96,10 @@ class NilaiSiswaResource extends Resource
                         'D' => 'danger',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('deskripsi')
+                TextColumn::make('deskripsi')
                     ->label('Deskripsi')
                     ->wrap(),
-                Tables\Columns\TextColumn::make('jadwalMengajar.tahunAjaran.label')
+                TextColumn::make('jadwalMengajar.tahunAjaran.label')
                     ->label('Tahun Ajaran')
                     ->toggleable(isToggledHiddenByDefault: true),
             ]);
@@ -108,7 +108,7 @@ class NilaiSiswaResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListNilaiSiswas::route('/'),
+            'index' => ListNilaiSiswas::route('/'),
         ];
     }
 }

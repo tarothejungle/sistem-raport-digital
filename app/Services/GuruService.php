@@ -13,11 +13,10 @@ final class GuruService
 {
     public function __construct(
         private readonly AccountIdentityService $accountIdentityService,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Guru
     {
@@ -46,14 +45,19 @@ final class GuruService
 
             return Guru::query()->create([
                 'user_id' => $user->getKey(),
-                ...Arr::only($data, ['no_telp']),
+                ...Arr::only($data, [
+                    'no_telp',
+                    'tempat_lahir',
+                    'tanggal_lahir',
+                    'pendidikan_terakhir',
+                ]),
                 'can_input_nilai' => false,
             ]);
         });
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(Guru $guru, array $data): Guru
     {
@@ -97,7 +101,12 @@ final class GuruService
             $user->update($userData);
 
             $guru->update([
-                ...Arr::only($data, ['no_telp']),
+                ...Arr::only($data, [
+                    'no_telp',
+                    'tempat_lahir',
+                    'tanggal_lahir',
+                    'pendidikan_terakhir',
+                ]),
             ]);
 
             return $guru->refresh();

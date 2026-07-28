@@ -3,14 +3,22 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\Concerns\AdminOnlyResource;
-use App\Filament\Admin\Resources\TahunAjaranResource\Pages;
+use App\Filament\Admin\Resources\TahunAjaranResource\Pages\CreateTahunAjaran;
+use App\Filament\Admin\Resources\TahunAjaranResource\Pages\EditTahunAjaran;
+use App\Filament\Admin\Resources\TahunAjaranResource\Pages\ListTahunAjarans;
 use App\Models\TahunAjaran;
 use App\Rules\TahunAjaranBerurutan;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Validation\Rule;
 
@@ -20,38 +28,38 @@ class TahunAjaranResource extends Resource
 
     protected static ?string $model = TahunAjaran::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 6;
 
     protected static ?string $modelLabel = 'Tahun Ajaran';
 
     protected static ?string $pluralModelLabel = 'Tahun Ajaran';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\TextInput::make('nama')
+        return $schema->components([
+            TextInput::make('nama')
                 ->label('Tahun Ajaran')
                 ->placeholder('2025/2026')
                 ->required()
                 ->maxLength(9)
                 ->regex('/^\d{4}\/\d{4}$/')
-                ->rule(new TahunAjaranBerurutan())
+                ->rule(new TahunAjaranBerurutan)
                 ->rules([
-                    static fn (Forms\Get $get, ?TahunAjaran $record) => Rule::unique('tahun_ajarans', 'nama')
+                    static fn (Get $get, ?TahunAjaran $record) => Rule::unique('tahun_ajarans', 'nama')
                         ->where('semester', $get('semester'))
                         ->ignore($record),
                 ]),
-            Forms\Components\Select::make('semester')
+            Select::make('semester')
                 ->options([
                     'Ganjil' => 'Ganjil',
                     'Genap' => 'Genap',
                 ])
                 ->required(),
-            Forms\Components\Toggle::make('is_active')
+            Toggle::make('is_active')
                 ->label('Jadikan tahun ajaran aktif')
                 ->default(false)
                 ->helperText('Hanya satu tahun ajaran yang dapat aktif pada satu waktu.')
@@ -64,49 +72,54 @@ class TahunAjaranResource extends Resource
         return $table
             ->defaultSort('nama', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('nama')
+                TextColumn::make('nama')
                     ->label('Tahun Ajaran')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('semester')
+                TextColumn::make('semester')
                     ->badge(),
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('jadwal_mengajars_count')
+                TextColumn::make('jadwal_mengajars_count')
                     ->label('Jadwal')
                     ->counts('jadwalMengajars')
                     ->badge(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
-                    ->before(function (Tables\Actions\DeleteAction $action, TahunAjaran $record): void {
-                        if (! $record->jadwalMengajars()->exists()) {
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
+                    ->before(function (DeleteAction $action, TahunAjaran $record): void {
+                        if (
+                            ! $record->jadwalMengajars()->exists()
+                            && ! $record->riwayatKelasSiswas()->exists()
+                            && ! $record->alumniSiswas()->exists()
+                        ) {
                             return;
                         }
 
                         Notification::make()
                             ->danger()
                             ->title('Tahun ajaran tidak dapat dihapus')
-                            ->body('Hapus jadwal mengajar yang masih memakai tahun ajaran ini terlebih dahulu.')
+                            ->body('Hapus jadwal mengajar, riwayat kelas, atau data alumni yang masih memakai tahun ajaran ini terlebih dahulu.')
                             ->send();
 
                         $action->cancel();
                     }),
             ]);
     }
-    
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
+
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTahunAjarans::route('/'),
-            'create' => Pages\CreateTahunAjaran::route('/create'),
-            'edit' => Pages\EditTahunAjaran::route('/{record}/edit'),
+            'index' => ListTahunAjarans::route('/'),
+            'create' => CreateTahunAjaran::route('/create'),
+            'edit' => EditTahunAjaran::route('/{record}/edit'),
         ];
     }
 }

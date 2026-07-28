@@ -6,8 +6,8 @@ use App\Filament\Admin\Resources\MataPelajaranResource;
 use App\Models\MataPelajaran;
 use App\Services\MataPelajaranService;
 use Filament\Actions\Action;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateMataPelajaran extends CreateRecord
 {

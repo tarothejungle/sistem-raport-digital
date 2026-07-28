@@ -6,6 +6,9 @@
 .phpactor.json
 .phpunit.result.cache
 /.codex
+/.claude/
+/.codebase-memory/
+/.codebase-memory.json
 /.cursor/
 /.idea
 /.nova

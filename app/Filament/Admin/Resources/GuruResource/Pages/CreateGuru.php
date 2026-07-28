@@ -5,14 +5,14 @@ namespace App\Filament\Admin\Resources\GuruResource\Pages;
 use App\Filament\Admin\Resources\GuruResource;
 use App\Models\Guru;
 use App\Services\GuruService;
-use Filament\Resources\Pages\CreateRecord;
 use Filament\Actions\Action;
+use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
 class CreateGuru extends CreateRecord
 {
     protected static string $resource = GuruResource::class;
-    
+
     /**
      * @param  array<string, mixed>  $data
      */

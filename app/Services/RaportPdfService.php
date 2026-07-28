@@ -8,7 +8,6 @@ use App\Models\PengaturanMadrasah;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Collection;
 
 class RaportPdfService
 {
@@ -21,6 +20,13 @@ class RaportPdfService
             'kelas.waliKelas.user',
         ]);
 
+        $kelas = app(KenaikanKelasService::class)->kelasUntukTahunAjaran(
+            $siswa,
+            $tahunAjaran->getKey(),
+        ) ?? $siswa->kelas;
+
+        $kelas?->loadMissing('waliKelas.user');
+
         $jadwalMengajars = JadwalMengajar::query()
             ->with([
                 'mataPelajaran',
@@ -29,7 +35,7 @@ class RaportPdfService
                     ->where('siswa_id', $siswa->getKey())
                     ->where('is_submitted', true),
             ])
-            ->where('kelas_id', $siswa->kelas_id)
+            ->where('kelas_id', $kelas?->getKey() ?? 0)
             ->where('tahun_ajaran_id', $tahunAjaran->getKey())
             ->get()
             ->sortBy(static function (JadwalMengajar $jadwalMengajar): string {
@@ -60,12 +66,12 @@ class RaportPdfService
 
         $pengaturan = PengaturanMadrasah::query()->first()
             ?? new PengaturanMadrasah([
-                'nama_madrasah' => 'Sistem Raport Digital',
+                'nama_madrasah' => 'Sistem Rapor Digital',
             ]);
 
         return [
             'siswa' => $siswa,
-            'kelas' => $siswa->kelas,
+            'kelas' => $kelas,
             'tahunAjaran' => $tahunAjaran,
             'pengaturan' => $pengaturan,
             'kelompokA' => $barisNilai

@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\JadwalMengajar;
 use App\Models\KkmPengajar;
 use App\Models\Nilai;
-use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
@@ -13,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 final class NilaiService
 {
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     public function prepareForPersistence(
@@ -32,9 +31,12 @@ final class NilaiService
 
         $this->ensureActorCanManageSchedule($jadwalMengajar);
 
-        $siswaSesuaiKelas = Siswa::query()
+        $siswaSesuaiKelas = app(KenaikanKelasService::class)
+            ->siswaUntukKelasTahunQuery(
+                (int) $jadwalMengajar->kelas_id,
+                (int) $jadwalMengajar->tahun_ajaran_id,
+            )
             ->whereKey($data['siswa_id'] ?? null)
-            ->where('kelas_id', $jadwalMengajar->kelas_id)
             ->exists();
 
         if (! $siswaSesuaiKelas) {

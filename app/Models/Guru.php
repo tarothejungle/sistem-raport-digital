@@ -15,6 +15,9 @@ class Guru extends Model
         'user_id',
         // 'nik',
         'no_telp',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'pendidikan_terakhir',
         'can_input_nilai',
     ];
 
@@ -25,6 +28,7 @@ class Guru extends Model
     {
         return [
             'can_input_nilai' => 'boolean',
+            'tanggal_lahir' => 'date',
         ];
     }
 

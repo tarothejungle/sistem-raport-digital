@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class JadwalMengajar extends Model
 {
@@ -71,7 +72,29 @@ class JadwalMengajar extends Model
             $this->kelas?->nama_kelas,
             $this->guru?->user?->name,
             $this->tahunAjaran?->label,
-        ])->filter()->implode(' • ');
+        ])->filter()->implode(' - ');
+    }
+
+    public function getSlug(): string
+    {
+        $this->loadMissing(['mataPelajaran', 'kelas']);
+
+        $mapel = Str::slug($this->mataPelajaran?->nama_mapel ?? 'mapel');
+        $kelas = Str::slug($this->kelas?->nama_kelas ?? 'kelas');
+
+        return "{$mapel}-{$kelas}";
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
+    public function resolveRouteBinding($value, $field = null): ?static
+    {
+        $id = (int) preg_replace('/^.*-(\d+)$/', '$1', (string) $value);
+
+        return $id > 0 ? static::find($id) : null;
     }
 
     private static function syncGuruInputPermission(int $guruId): void

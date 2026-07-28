@@ -19,8 +19,8 @@ document.addEventListener('submit', async (event) => {
     event.stopImmediatePropagation();
 
     const result = await window.Swal.fire({
-        title: 'Keluar dari akun?',
-        text: 'Sesi Anda akan diakhiri. Anda perlu masuk kembali untuk melanjutkan.',
+        title: 'Anda yakin ingin keluar?',
+        text: 'Sesi Anda akan berakhir.',
         icon: 'warning',
         iconColor: '#f59e0b',
         showCancelButton: true,

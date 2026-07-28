@@ -5,8 +5,8 @@ namespace App\Filament\Admin\Resources\SiswaResource\Pages;
 use App\Filament\Admin\Resources\SiswaResource;
 use App\Models\Siswa;
 use App\Services\SiswaService;
-use Filament\Resources\Pages\CreateRecord;
 use Filament\Actions\Action;
+use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
 class CreateSiswa extends CreateRecord

@@ -3,12 +3,18 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\Concerns\AdminOnlyResource;
-use App\Filament\Admin\Resources\PengaturanMadrasahResource\Pages;
+use App\Filament\Admin\Resources\PengaturanMadrasahResource\Pages\CreatePengaturanMadrasah;
+use App\Filament\Admin\Resources\PengaturanMadrasahResource\Pages\EditPengaturanMadrasah;
+use App\Filament\Admin\Resources\PengaturanMadrasahResource\Pages\ListPengaturanMadrasah;
 use App\Models\PengaturanMadrasah;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class PengaturanMadrasahResource extends Resource
@@ -17,9 +23,9 @@ class PengaturanMadrasahResource extends Resource
 
     protected static ?string $model = PengaturanMadrasah::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $navigationGroup = 'Pengaturan';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?int $navigationSort = 1;
 
@@ -33,17 +39,17 @@ class PengaturanMadrasahResource extends Resource
             && ! PengaturanMadrasah::query()->exists();
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Section::make('Identitas Madrasah')
+        return $schema->components([
+            Section::make('Identitas Madrasah')
                 ->schema([
-                    Forms\Components\TextInput::make('nama_madrasah')
+                    TextInput::make('nama_madrasah')
                         ->label('Nama Madrasah')
                         ->required()
                         ->maxLength(150),
 
-                    Forms\Components\FileUpload::make('logo_path')
+                    FileUpload::make('logo_path')
                         ->label('Logo Madrasah')
                         ->image()
                         ->disk('public')
@@ -54,27 +60,28 @@ class PengaturanMadrasahResource extends Resource
                         ->maxSize(2048)
                         ->helperText('Format gambar: JPG, JPEG, PNG, atau WEBP. Maksimal 2 MB.'),
                 ])
-                ->columns(2),
+                ->columns(2)
+                ->columnSpanFull(),
 
-            Forms\Components\Section::make('Pimpinan Madrasah')
+            Section::make('Pimpinan Madrasah')
                 ->schema([
-                    Forms\Components\TextInput::make('nama_kepala_madrasah')
+                    TextInput::make('nama_kepala_madrasah')
                         ->label('Nama Kepala Madrasah')
                         ->maxLength(150),
 
-                    Forms\Components\TextInput::make('nip_kepala_madrasah')
+                    TextInput::make('nip_kepala_madrasah')
                         ->label('NIP Kepala Madrasah')
                         ->nullable()
                         ->maxLength(30)
                         ->placeholder('-')
                         ->helperText('Kosongkan atau isi tanda "-" apabila kepala madrasah belum memiliki NIP.'),
 
-                    Forms\Components\TextInput::make('kota')
+                    TextInput::make('kota')
                         ->label('Kota')
                         ->maxLength(100)
                         ->helperText('Contoh: Tangerang.'),
 
-                    Forms\Components\FileUpload::make('ttd_kepala_path')
+                    FileUpload::make('ttd_kepala_path')
                         ->label('Tanda Tangan Kepala Madrasah')
                         ->image()
                         ->disk('public')
@@ -85,7 +92,8 @@ class PengaturanMadrasahResource extends Resource
                         ->maxSize(2048)
                         ->helperText('Unggah gambar tanda tangan dengan latar transparan bila tersedia.'),
                 ])
-                ->columns(2),
+                ->columns(2)
+                ->columnSpanFull(),
         ]);
     }
 
@@ -93,38 +101,38 @@ class PengaturanMadrasahResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('logo_path')
+                ImageColumn::make('logo_path')
                     ->label('Logo')
                     ->disk('public')
                     ->circular(),
 
-                Tables\Columns\TextColumn::make('nama_madrasah')
+                TextColumn::make('nama_madrasah')
                     ->label('Madrasah')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('nama_kepala_madrasah')
+                TextColumn::make('nama_kepala_madrasah')
                     ->label('Kepala Madrasah')
                     ->placeholder('-'),
 
-                Tables\Columns\TextColumn::make('kota')
+                TextColumn::make('kota')
                     ->label('Kota')
                     ->placeholder('-'),
 
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label('Diperbarui')
                     ->dateTime('d M Y H:i'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPengaturanMadrasahs::route('/'),
-            'create' => Pages\CreatePengaturanMadrasah::route('/create'),
-            'edit' => Pages\EditPengaturanMadrasah::route('/{record}/edit'),
+            'index' => ListPengaturanMadrasah::route('/'),
+            'create' => CreatePengaturanMadrasah::route('/create'),
+            'edit' => EditPengaturanMadrasah::route('/{record}/edit'),
         ];
     }
 }

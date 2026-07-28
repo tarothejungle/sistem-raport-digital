@@ -4,8 +4,9 @@ namespace App\Filament\Admin\Resources\SiswaResource\Pages;
 
 use App\Filament\Admin\Resources\SiswaResource;
 use App\Services\SiswaImportService;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Validation\ValidationException;
@@ -15,23 +16,28 @@ class ListSiswas extends ListRecords
 {
     protected static string $resource = SiswaResource::class;
 
+    public function getSubheading(): ?string
+    {
+        return 'Kelola data peserta didik, akun portal, import Excel, dan akses nilai.';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('downloadTemplate')
+            Action::make('downloadTemplate')
                 ->label('Template Excel')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('gray')
                 ->url(url('/templates/template-import-siswa.xlsx'))
                 ->openUrlInNewTab(),
-            Actions\Action::make('importExcel')
+            Action::make('importExcel')
                 ->label('Import Excel')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->modalHeading('Import Data Siswa')
                 ->modalDescription('Data akan ditambahkan atau diperbarui berdasarkan NISN. File tidak disimpan permanen di server.')
                 ->modalSubmitActionLabel('Mulai Import')
-                ->form([
-                    Forms\Components\FileUpload::make('file')
+                ->schema([
+                    FileUpload::make('file')
                         ->label('File Data Siswa')
                         ->required()
                         ->storeFiles(false)
@@ -81,8 +87,9 @@ class ListSiswas extends ListRecords
                         ))
                         ->send();
                 }),
-            Actions\CreateAction::make()
-                ->label('Tambah Siswa'),
+            CreateAction::make()
+                ->label('Tambah Siswa')
+                ->icon('heroicon-o-plus-circle'),
         ];
     }
 }

@@ -4,16 +4,16 @@ namespace App\Filament\Admin\Widgets;
 
 use App\Models\Guru;
 use App\Models\JadwalMengajar;
+use App\Models\Kelas;
 use App\Models\Nilai;
 use App\Models\Siswa;
-use App\Models\Kelas;
 use App\Models\TahunAjaran;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class RaportOverview extends BaseWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public static function canView(): bool
     {
@@ -39,8 +39,8 @@ class RaportOverview extends BaseWidget
             ->count();
 
         return [
-            Stat::make('Siswa Terdaftar', Siswa::query()->count())
-                ->description('Seluruh siswa yang tercatat')
+            Stat::make('Siswa Terdaftar', Siswa::query()->aktif()->count())
+                ->description('Siswa aktif yang tercatat')
                 ->descriptionIcon('heroicon-m-academic-cap')
                 ->icon('heroicon-o-academic-cap')
                 ->color('primary'),

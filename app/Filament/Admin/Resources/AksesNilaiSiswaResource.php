@@ -2,22 +2,28 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\AksesNilaiSiswaResource\Pages;
+use App\Filament\Admin\Resources\AksesNilaiSiswaResource\Pages\ListAksesNilaiSiswas;
 use App\Models\Siswa;
 use App\Services\StudentAccessService;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class AksesNilaiSiswaResource extends Resource
 {
     protected static ?string $model = Siswa::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-key';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-key';
 
-    protected static ?string $navigationGroup = 'Akademik';
+    protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
     protected static ?int $navigationSort = 3;
 
@@ -81,22 +87,22 @@ class AksesNilaiSiswaResource extends Resource
         return $table
             ->defaultSort('nama_lengkap')
             ->columns([
-                Tables\Columns\TextColumn::make('nisn')
+                TextColumn::make('nisn')
                     ->label('NISN / ID Login')
                     ->searchable()
                     ->copyable(),
-                Tables\Columns\TextColumn::make('nama_lengkap')
+                TextColumn::make('nama_lengkap')
                     ->label('Nama Siswa')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('kelas.nama_kelas')
+                TextColumn::make('kelas.nama_kelas')
                     ->label('Kelas')
                     ->badge(),
-                Tables\Columns\IconColumn::make('can_view_nilai')
+                IconColumn::make('can_view_nilai')
                     ->label('Boleh Melihat Nilai')
                     ->boolean(),
             ])
-            ->actions([
-                Tables\Actions\Action::make('ubahAkses')
+            ->recordActions([
+                Action::make('ubahAkses')
                     ->label(static fn (Siswa $record): string => $record->can_view_nilai ? 'Cabut Akses' : 'Izinkan Akses')
                     ->icon(static fn (Siswa $record): string => $record->can_view_nilai ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
                     ->color(static fn (Siswa $record): string => $record->can_view_nilai ? 'danger' : 'success')
@@ -115,13 +121,62 @@ class AksesNilaiSiswaResource extends Resource
                             ! $record->can_view_nilai,
                         );
                     }),
+            ])
+            ->toolbarActions([
+                BulkAction::make('allowSelected')
+                    ->label('Izinkan Akses Terpilih')
+                    ->icon('heroicon-o-lock-open')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Izinkan akses nilai siswa terpilih?')
+                    ->modalDescription('Siswa terpilih dapat masuk ke portal dan melihat nilai yang sudah difinalisasi.')
+                    ->modalSubmitActionLabel('Ya, izinkan')
+                    ->action(static function ($records): void {
+                        self::bulkSetViewingAccess($records, true);
+                    })
+                    ->deselectRecordsAfterCompletion(),
+
+                BulkAction::make('revokeSelected')
+                    ->label('Cabut Akses Terpilih')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cabut akses nilai siswa terpilih?')
+                    ->modalDescription('Siswa terpilih tidak dapat lagi melihat nilai di portal.')
+                    ->modalSubmitActionLabel('Ya, cabut')
+                    ->action(static function ($records): void {
+                        self::bulkSetViewingAccess($records, false);
+                    })
+                    ->deselectRecordsAfterCompletion(),
             ]);
+    }
+
+    private static function bulkSetViewingAccess($records, bool $enabled): void
+    {
+        $updated = 0;
+        $blocked = 0;
+
+        foreach ($records as $record) {
+            try {
+                app(StudentAccessService::class)->setViewingAccess($record, $enabled);
+                $updated++;
+            } catch (AuthorizationException|ValidationException) {
+                $blocked++;
+            }
+        }
+
+        $actionLabel = $enabled ? 'diizinkan' : 'dicabut';
+        $notification = Notification::make()
+            ->title($blocked > 0 ? 'Sebagian akses siswa tidak dapat diubah' : 'Akses siswa berhasil diubah')
+            ->body("{$updated} akses siswa berhasil {$actionLabel}. {$blocked} siswa dilewati karena tidak memenuhi syarat.");
+
+        ($blocked > 0 ? $notification->warning() : $notification->success())->send();
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAksesNilaiSiswas::route('/'),
+            'index' => ListAksesNilaiSiswas::route('/'),
         ];
     }
 }

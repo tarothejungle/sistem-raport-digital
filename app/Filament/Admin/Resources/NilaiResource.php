@@ -2,17 +2,29 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\NilaiResource\Pages;
+use App\Filament\Admin\Resources\NilaiResource\Pages\CreateNilai;
+use App\Filament\Admin\Resources\NilaiResource\Pages\EditNilai;
+use App\Filament\Admin\Resources\NilaiResource\Pages\ListNilais;
 use App\Models\JadwalMengajar;
 use App\Models\Nilai;
-use App\Models\Siswa;
+use App\Services\KenaikanKelasService;
 use App\Services\NilaiService;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -23,9 +35,9 @@ class NilaiResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static ?string $navigationGroup = 'Akademik';
+    protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
     protected static ?int $navigationSort = 2;
 
@@ -86,13 +98,13 @@ class NilaiResource extends Resource
         return $query->whereKey(0);
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Section::make('Identitas Nilai')
+        return $schema->components([
+            Section::make('Identitas Nilai')
                 ->description('Mata pelajaran, guru, dan kelas diambil dari penugasan pengajar. KKM mengikuti pengaturan guru untuk mapel dan tahun ajaran terkait.')
                 ->schema([
-                    Forms\Components\Select::make('jadwal_mengajar_id')
+                    Select::make('jadwal_mengajar_id')
                         ->label('Pengajar Kelas')
                         ->options(static fn (): array => static::availableJadwalOptions())
                         ->searchable()
@@ -101,7 +113,7 @@ class NilaiResource extends Resource
                         ->afterStateUpdated(static function (Set $set): void {
                             $set('siswa_id', null);
                         }),
-                    Forms\Components\Select::make('siswa_id')
+                    Select::make('siswa_id')
                         ->label('Peserta Didik')
                         ->options(static function (Get $get): array {
                             $kelasId = JadwalMengajar::query()
@@ -112,8 +124,15 @@ class NilaiResource extends Resource
                                 return [];
                             }
 
-                            return Siswa::query()
-                                ->where('kelas_id', $kelasId)
+                            $tahunAjaranId = JadwalMengajar::query()
+                                ->whereKey($get('jadwal_mengajar_id'))
+                                ->value('tahun_ajaran_id');
+
+                            return app(KenaikanKelasService::class)
+                                ->siswaUntukKelasTahunQuery(
+                                    (int) $kelasId,
+                                    $tahunAjaranId !== null ? (int) $tahunAjaranId : null,
+                                )
                                 ->orderBy('nama_lengkap')
                                 ->pluck('nama_lengkap', 'id')
                                 ->all();
@@ -121,8 +140,8 @@ class NilaiResource extends Resource
                         ->searchable()
                         ->required()
                         ->disabled(static fn (Get $get): bool => blank($get('jadwal_mengajar_id'))),
-                    Forms\Components\Placeholder::make('ringkasan_jadwal')
-                        ->label('Informasi Raport')
+                    Placeholder::make('ringkasan_jadwal')
+                        ->label('Informasi Rapor')
                         ->content(static function (Get $get): string {
                             $jadwal = JadwalMengajar::query()
                                 ->with(['mataPelajaran', 'guru.user', 'kelas'])
@@ -141,11 +160,13 @@ class NilaiResource extends Resource
                             );
                         })
                         ->columnSpanFull(),
-                ])->columns(2),
-            Forms\Components\Section::make('Nilai Raport PTS')
-                ->description('Predikat dihitung otomatis: A (90–100), B (80–89), C (KKM–79), D (di bawah KKM).')
+                ])
+                ->columns(2)
+                ->columnSpanFull(),
+            Section::make('Nilai Rapor PTS')
+                ->description('Predikat dihitung otomatis: A (90-100), B (80-89), C (KKM-79), D (di bawah KKM).')
                 ->schema([
-                    Forms\Components\TextInput::make('nilai_angka')
+                    TextInput::make('nilai_angka')
                         ->label('Nilai Angka')
                         ->numeric()
                         ->integer()
@@ -153,7 +174,7 @@ class NilaiResource extends Resource
                         ->maxValue(100)
                         ->required()
                         ->live(),
-                    Forms\Components\Placeholder::make('predikat_preview')
+                    Placeholder::make('predikat_preview')
                         ->label('Predikat (Otomatis)')
                         ->content(static function (Get $get): string {
                             $jadwal = JadwalMengajar::query()
@@ -170,19 +191,21 @@ class NilaiResource extends Resource
                                 app(NilaiService::class)->kkmUntukJadwal($jadwal),
                             );
                         }),
-                    Forms\Components\Textarea::make('deskripsi')
+                    Textarea::make('deskripsi')
                         ->label('Deskripsi')
                         ->required()
                         ->rows(4)
                         ->maxLength(1000)
                         ->columnSpanFull()
                         ->helperText('Contoh: Siswa memiliki keterampilan yang SANGAT BAIK dalam memahami materi.'),
-                    Forms\Components\Toggle::make('is_submitted')
+                    Toggle::make('is_submitted')
                         ->label('Finalisasi dan tampilkan di portal siswa')
                         ->default(true)
                         ->helperText('Hanya nilai yang difinalisasi yang dapat dilihat oleh siswa.')
                         ->columnSpanFull(),
-                ])->columns(2),
+                ])
+                ->columns(2)
+                ->columnSpanFull(),
         ]);
     }
 
@@ -191,31 +214,31 @@ class NilaiResource extends Resource
         return $table
             ->defaultSort('updated_at', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('siswa.nisn')
+                TextColumn::make('siswa.nisn')
                     ->label('NISN')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('siswa.nama_lengkap')
+                TextColumn::make('siswa.nama_lengkap')
                     ->label('Siswa')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('jadwalMengajar.mataPelajaran.nama_mapel')
+                TextColumn::make('jadwalMengajar.mataPelajaran.nama_mapel')
                     ->label('Mata Pelajaran')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('jadwalMengajar.guru.user.name')
+                TextColumn::make('jadwalMengajar.guru.user.name')
                     ->label('Guru')
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('jadwalMengajar.kelas.nama_kelas')
+                TextColumn::make('jadwalMengajar.kelas.nama_kelas')
                     ->label('Kelas')
                     ->badge(),
-                Tables\Columns\TextColumn::make('kkm')
+                TextColumn::make('kkm')
                     ->label('KKM')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('nilai_angka')
+                TextColumn::make('nilai_angka')
                     ->label('Angka')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('predikat')
+                TextColumn::make('predikat')
                     ->label('Predikat')
                     ->badge()
                     ->color(static fn (?string $state): string => match ($state) {
@@ -225,41 +248,41 @@ class NilaiResource extends Resource
                         'D' => 'danger',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('deskripsi')
+                TextColumn::make('deskripsi')
                     ->label('Deskripsi')
                     ->limit(60)
                     ->wrap()
                     ->toggleable(),
-                Tables\Columns\IconColumn::make('is_submitted')
+                IconColumn::make('is_submitted')
                     ->label('Final')
                     ->boolean(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('jadwal_mengajar_id')
+                SelectFilter::make('jadwal_mengajar_id')
                     ->label('Pengajar Kelas')
                     ->options(static fn (): array => static::availableJadwalOptions())
                     ->searchable(),
-                Tables\Filters\SelectFilter::make('predikat')
+                SelectFilter::make('predikat')
                     ->options([
                         'A' => 'A',
                         'B' => 'B',
                         'C' => 'C',
                         'D' => 'D',
                     ]),
-                Tables\Filters\TernaryFilter::make('is_submitted')->label('Finalisasi'),
+                TernaryFilter::make('is_submitted')->label('Finalisasi'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListNilais::route('/'),
-            'create' => Pages\CreateNilai::route('/create'),
-            'edit' => Pages\EditNilai::route('/{record}/edit'),
+            'index' => ListNilais::route('/'),
+            'create' => CreateNilai::route('/create'),
+            'edit' => EditNilai::route('/{record}/edit'),
         ];
     }
 

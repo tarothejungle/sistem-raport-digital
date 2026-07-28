@@ -12,6 +12,10 @@ use Illuminate\Validation\ValidationException;
 
 final class SiswaService
 {
+    public function __construct(
+        private readonly AccountIdentityService $accountIdentityService,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -20,10 +24,26 @@ final class SiswaService
         $nisn = $this->normalizeNisn($data['nisn'] ?? null);
         $this->ensurePassword($data);
 
-        return DB::transaction(function () use ($data, $nisn): Siswa {
+        $username = $this->accountIdentityService->normalizeUsername(
+            $data['username'] ?? null,
+        );
+
+        $email = $this->accountIdentityService->normalizeEmail(
+            $data['email'] ?? null,
+        );
+
+        $this->accountIdentityService->ensureAvailable($username, $email);
+
+        return DB::transaction(function () use (
+            $data,
+            $nisn,
+            $username,
+            $email,
+        ): Siswa {
             $user = User::query()->create([
                 'name' => trim((string) $data['nama_lengkap']),
-                'email' => $this->internalEmailForNisn($nisn),
+                'username' => $username,
+                'email' => $email,
                 'password' => Hash::make((string) $data['password']),
                 'role' => User::ROLE_SISWA,
             ]);
@@ -33,6 +53,7 @@ final class SiswaService
                 'nisn' => $nisn,
                 ...Arr::only($data, ['nama_lengkap', 'kelas_id']),
                 'can_view_nilai' => false,
+                'status' => Siswa::STATUS_AKTIF,
             ]);
         });
     }
@@ -46,26 +67,43 @@ final class SiswaService
 
         return DB::transaction(function () use ($siswa, $data, $nisn): Siswa {
             $siswa->loadMissing('user');
+
+            $username = $this->accountIdentityService->normalizeUsername(
+                $data['username'] ?? null,
+            );
+
+            $email = $this->accountIdentityService->normalizeEmail(
+                $data['email'] ?? null,
+            );
+
             $user = $siswa->user;
 
             if ($user === null) {
                 $this->ensurePassword($data);
+                $this->accountIdentityService->ensureAvailable($username, $email);
 
                 $user = User::query()->create([
                     'name' => trim((string) $data['nama_lengkap']),
-                    'email' => $this->internalEmailForNisn($nisn),
+                    'username' => $username,
+                    'email' => $email,
                     'password' => Hash::make((string) $data['password']),
                     'role' => User::ROLE_SISWA,
                 ]);
 
                 $siswa->user_id = $user->getKey();
             } else {
+                $this->accountIdentityService->ensureAvailable($username, $email, $user);
+
                 $userData = [
                     'name' => trim((string) $data['nama_lengkap']),
+                    'username' => $username,
+                    'email' => $email,
                 ];
 
                 if (filled($data['password'] ?? null)) {
-                    $userData['password'] = Hash::make((string) $data['password']);
+                    $userData['password'] = Hash::make(
+                        (string) $data['password'],
+                    );
                 }
 
                 $user->update($userData);
@@ -75,6 +113,11 @@ final class SiswaService
                 'nisn' => $nisn,
                 ...Arr::only($data, ['nama_lengkap', 'kelas_id']),
             ]);
+
+            if (blank($siswa->status)) {
+                $siswa->status = Siswa::STATUS_AKTIF;
+            }
+
             $siswa->save();
 
             return $siswa->refresh();
@@ -84,8 +127,11 @@ final class SiswaService
     /**
      * @return array{status: 'created'|'updated', siswa: Siswa}
      */
-    public function upsertFromImport(string $nisn, string $namaLengkap, int $kelasId): array
-    {
+    public function upsertFromImport(
+        string $nisn,
+        string $namaLengkap,
+        int $kelasId,
+    ): array {
         $nisn = $this->normalizeNisn($nisn);
         $namaLengkap = trim($namaLengkap);
 
@@ -101,18 +147,38 @@ final class SiswaService
             ]);
         }
 
-        return DB::transaction(function () use ($nisn, $namaLengkap, $kelasId): array {
+        return DB::transaction(function () use (
+            $nisn,
+            $namaLengkap,
+            $kelasId,
+        ): array {
             $siswa = Siswa::query()
                 ->with('user')
                 ->where('nisn', $nisn)
                 ->first();
 
             if ($siswa === null) {
-                $siswa = $this->create([
+                $account = $this->accountUntukImpor($nisn);
+                $this->accountIdentityService->ensureAvailable(
+                    $account['username'],
+                    $account['email'],
+                );
+
+                $user = User::query()->create([
+                    'name' => $namaLengkap,
+                    'username' => $account['username'],
+                    'email' => $account['email'],
+                    'password' => Hash::make($nisn),
+                    'role' => User::ROLE_SISWA,
+                ]);
+
+                $siswa = Siswa::query()->create([
+                    'user_id' => $user->getKey(),
                     'nisn' => $nisn,
                     'nama_lengkap' => $namaLengkap,
                     'kelas_id' => $kelasId,
-                    'password' => $nisn,
+                    'can_view_nilai' => false,
+                    'status' => Siswa::STATUS_AKTIF,
                 ]);
 
                 return [
@@ -124,13 +190,22 @@ final class SiswaService
             $siswa->fill([
                 'nama_lengkap' => $namaLengkap,
                 'kelas_id' => $kelasId,
+                'status' => $siswa->status ?: Siswa::STATUS_AKTIF,
             ]);
+
             $siswa->save();
 
             if ($siswa->user === null) {
+                $account = $this->accountUntukImpor($nisn);
+                $this->accountIdentityService->ensureAvailable(
+                    $account['username'],
+                    $account['email'],
+                );
+
                 $user = User::query()->create([
                     'name' => $namaLengkap,
-                    'email' => $this->internalEmailForNisn($nisn),
+                    'username' => $account['username'],
+                    'email' => $account['email'],
                     'password' => Hash::make($nisn),
                     'role' => User::ROLE_SISWA,
                 ]);
@@ -198,8 +273,43 @@ final class SiswaService
         return $nisn;
     }
 
-    private function internalEmailForNisn(string $nisn): string
+    /**
+     * @return array{username: string, email: string}
+     */
+    private function accountUntukImpor(string $nisn): array
     {
-        return sprintf('siswa.%s@login.raport.local', $nisn);
+        $username = $nisn;
+        $counter = 2;
+
+        while (
+            User::query()
+                ->where('username', $username)
+                ->exists()
+        ) {
+            $username = sprintf('siswa-%s-%d', $nisn, $counter);
+            $counter++;
+        }
+
+        $email = sprintf('siswa.%s@login.raport.local', $nisn);
+        $counter = 2;
+
+        while (
+            User::query()
+                ->where('email', $email)
+                ->exists()
+        ) {
+            $email = sprintf(
+                'siswa.%s.%d@login.raport.local',
+                $nisn,
+                $counter,
+            );
+
+            $counter++;
+        }
+
+        return [
+            'username' => $username,
+            'email' => $email,
+        ];
     }
 }

@@ -13,17 +13,11 @@
 
 @if ($user)
     <div class="raport-topbar-user-summary">
-        <div
-            class="raport-topbar-user-summary__greeting"
-            style="font-size: 0.95rem; font-weight: 750;"
-        >
-            Hi, {{ $user->name }}
+        <div class="raport-topbar-user-summary__greeting">
+            Halo, {{ $user->name }}
         </div>
 
-        <div
-            class="raport-topbar-user-summary__role"
-            style="font-size: 0.76rem; font-weight: 500;"
-        >
+        <div class="raport-topbar-user-summary__role">
             {{ $roleLabel }}
         </div>
     </div>

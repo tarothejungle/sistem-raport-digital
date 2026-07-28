@@ -146,11 +146,13 @@ final class SiswaImportService
 
             if (! preg_match('/^\d{8,20}$/', $nisn)) {
                 $errors[] = "Baris {$line}: NISN harus berisi 8 sampai 20 digit angka.";
+
                 continue;
             }
 
             if ($namaLengkap === '') {
                 $errors[] = "Baris {$line}: Nama Lengkap wajib diisi.";
+
                 continue;
             }
 
@@ -158,11 +160,13 @@ final class SiswaImportService
 
             if ($kelasId === null) {
                 $errors[] = "Baris {$line}: kelas '{$namaKelas}' belum terdaftar pada menu Kelas.";
+
                 continue;
             }
 
             if (isset($seenNisn[$nisn])) {
                 $errors[] = "Baris {$line}: NISN {$nisn} muncul lebih dari satu kali pada file.";
+
                 continue;
             }
 
@@ -268,7 +272,7 @@ final class SiswaImportService
             ]);
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         if ($zip->open($absolutePath) !== true) {
             throw ValidationException::withMessages([

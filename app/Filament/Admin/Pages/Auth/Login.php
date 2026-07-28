@@ -3,70 +3,84 @@
 namespace App\Filament\Admin\Pages\Auth;
 
 use App\Services\LoginIdentifierResolver;
-use Filament\Facades\Filament;
-use Filament\Forms;
 use Filament\Actions\Action;
-use Filament\Forms\Form;
-use Filament\Http\Responses\Auth\Contracts\LoginResponse;
-use Filament\Pages\Auth\Login as BaseLogin;
-use Filament\Forms\Components\Component;
-use Illuminate\Support\HtmlString;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
+use Filament\Facades\Filament;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\View;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use MuazzamBuilds\FilamentTurnstile\Concerns\InteractsWithTurnstile;
 
-class Login extends BaseLogin
+class Login extends \Filament\Auth\Pages\Login
 {
-    public function form(Form $form): Form
+    use InteractsWithTurnstile;
+
+    protected string $view = 'filament.admin.pages.auth.login';
+
+    protected Width|string|null $maxWidth = '6xl';
+
+    public function hasLogo(): bool
     {
-        $passwordResetUrl = Filament::getCurrentPanel()
+        return false;
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        $passwordResetUrl = Filament::getCurrentOrDefaultPanel()
             ->getRequestPasswordResetUrl() ?? '#';
 
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('login')
+        return $schema
+            ->components([
+                TextInput::make('login')
                     ->label('Username')
-                    ->placeholder('Username')
+                    ->placeholder('Masukkan username')
                     ->prefixIcon('heroicon-m-identification')
+                    ->extraFieldWrapperAttributes([
+                        'class' => 'srd-login-field srd-login-field--username',
+                    ])
                     ->required()
                     ->autocomplete('username')
                     ->autofocus(),
 
                 $this->getPasswordFormComponent(),
 
-                Forms\Components\Grid::make()
+                Grid::make()
                     ->columns(2)
                     ->extraAttributes([
-                        'style' => 'grid-template-columns: minmax(0, 1fr) auto; align-items: center;',
+                        'class' => 'srd-login-options',
                     ])
                     ->schema([
                         $this->getRememberFormComponent()
                             ->label('Ingat Saya')
                             ->columnSpan(1)
                             ->extraAttributes([
-                                'style' => 'white-space: nowrap;',
+                                'class' => 'srd-login-remember',
                             ]),
 
-                        Forms\Components\Placeholder::make('password_reset_link')
-                            ->hiddenLabel()
+                        View::make('filament.admin.components.login-reset-link')
+                            ->viewData([
+                                'url' => $passwordResetUrl,
+                            ])
                             ->columnSpan(1)
                             ->extraAttributes([
-                                'style' => 'justify-self: end; white-space: nowrap;',
-                            ])
-                            ->content(
-                                new HtmlString(
-                                    sprintf(
-                                        '<a
-                                            href="%s"
-                                            style="white-space: nowrap; font-size: 0.875rem; font-weight: 500; color: #2563eb;"
-                                        >
-                                            Lupa kata sandi?
-                                        </a>',
-                                        e($passwordResetUrl),
-                                    ),
-                                ),
-                            ),
+                                'class' => 'srd-login-reset-cell',
+                            ]),
                     ]),
+
+                $this->getTurnstileFormComponent('login')
+                    ->size('flexible')
+                    ->theme('auto')
+                    ->language('id')
+                    ->extraFieldWrapperAttributes([
+                        'class' => 'srd-login-turnstile',
+                    ])
+                    ->columnSpanFull(),
             ])
             ->statePath('data');
     }
@@ -75,30 +89,40 @@ class Login extends BaseLogin
     {
         return parent::getPasswordFormComponent()
             ->hint(null)
-            ->label('Password')
-            ->prefixIcon('heroicon-m-lock-closed');
+            ->label('Kata sandi')
+            ->placeholder('Masukkan kata sandi')
+            ->prefixIcon('heroicon-m-lock-closed')
+            ->extraFieldWrapperAttributes([
+                'class' => 'srd-login-field srd-login-field--password',
+            ])
+            ->extraAttributes([
+                'autocomplete' => 'current-password',
+            ]);
     }
 
     public function getTitle(): string
     {
-        return 'Login';
+        return 'Masuk - Sistem Rapor Digital';
     }
 
     public function getHeading(): string
     {
-        return 'Sistem Raport Digital';
+        return 'Sign In';
     }
 
     public function getSubheading(): ?string
     {
-        return 'Gunakan akun yang telah diberikan.';
+        return null;
     }
 
     protected function getAuthenticateFormAction(): Action
     {
         return parent::getAuthenticateFormAction()
-            ->label('Masuk ke Dashboard')
-            ->icon('heroicon-m-arrow-right');
+            ->label('Masuk ke Sistem')
+            ->icon(null)
+            ->extraAttributes([
+                'class' => 'srd-login-submit',
+            ]);
     }
 
     public function authenticate(): ?LoginResponse
@@ -107,6 +131,8 @@ class Login extends BaseLogin
         $throttleKey = $this->throttleKey((string) $data['login']);
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $this->dispatchTurnstileReset();
+
             throw ValidationException::withMessages([
                 'data.login' => sprintf(
                     'Terlalu banyak percobaan masuk. Coba lagi dalam %d detik.',
@@ -119,17 +145,19 @@ class Login extends BaseLogin
 
         if ($user === null || ! Hash::check((string) $data['password'], $user->password)) {
             RateLimiter::hit($throttleKey, 60);
+            $this->dispatchTurnstileReset();
 
             throw ValidationException::withMessages([
                 'data.login' => 'Data masuk atau kata sandi tidak sesuai.',
             ]);
         }
 
-        if (! $user->canAccessPanel(Filament::getCurrentPanel())) {
+        if (! $user->canAccessPanel(Filament::getCurrentOrDefaultPanel())) {
             RateLimiter::hit($throttleKey, 60);
+            $this->dispatchTurnstileReset();
 
             throw ValidationException::withMessages([
-                'data.login' => 'Akun ini belum memiliki akses ke portal raport.',
+                'data.login' => 'Akun ini belum memiliki akses ke portal rapor.',
             ]);
         }
 

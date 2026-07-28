@@ -5,9 +5,9 @@ namespace App\Filament\Admin\Resources\KelasResource\Pages;
 use App\Filament\Admin\Resources\KelasResource;
 use App\Models\Kelas;
 use App\Services\KelasService;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateKelas extends CreateRecord
 {

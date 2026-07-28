@@ -3,17 +3,24 @@
 namespace App\Filament\Admin\Resources\KelasResource\Pages;
 
 use App\Filament\Admin\Resources\KelasResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListKelas extends ListRecords
 {
     protected static string $resource = KelasResource::class;
 
+    public function getSubheading(): ?string
+    {
+        return 'Atur ruang kelas, tingkat, wali kelas, dan daftar peserta aktif.';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('Tambah Kelas'),
+            CreateAction::make()
+                ->label('Tambah Kelas')
+                ->icon('heroicon-o-plus-circle'),
         ];
     }
 }

@@ -2,40 +2,78 @@
 
 namespace App\Filament\Admin\Pages;
 
-use App\Services\NilaiBatchService;
 use App\Filament\Admin\Resources\NilaiResource;
 use App\Models\JadwalMengajar;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
-use Illuminate\Support\Collection;
+use App\Services\KenaikanKelasService;
+use App\Services\NilaiBatchService;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Navigation\NavigationItem;
-use Filament\Pages\Page;
-use Filament\Tables;
-use Filament\Forms;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class InputNilaiPerMapel extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static string $view = 'filament.admin.resources.InputNilaiPerMapel';
+    protected string $view = 'filament.admin.resources.InputNilaiPerMapel';
 
     protected static ?string $title = 'Input Nilai';
 
+    protected static ?string $navigationLabel = 'Input Nilai';
+
     protected static ?string $slug = 'input-nilai/{jadwalMengajar}';
 
-    protected static ?string $navigationGroup = 'Akademik';
+    protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
     protected static ?int $navigationSort = 2;
 
     public JadwalMengajar $jadwalMengajar;
+
+    public static function getUrl(
+        array $parameters = [],
+        bool $isAbsolute = true,
+        ?string $panel = null,
+        ?Model $tenant = null,
+        bool $shouldGuessMissingParameters = false,
+        ?string $configuration = null,
+    ): string {
+        $parameters = (array) $parameters;
+
+        $jadwal = $parameters['jadwalMengajar'] ?? null;
+
+        if ($jadwal instanceof JadwalMengajar) {
+            $slug = $jadwal->getSlug();
+            $id = $jadwal->getKey();
+            $parameters['jadwalMengajar'] = "{$slug}-{$id}";
+        }
+
+        return parent::getUrl(
+            $parameters,
+            $isAbsolute,
+            $panel,
+            $tenant,
+            $shouldGuessMissingParameters,
+            $configuration,
+        );
+    }
 
     public static function canAccess(): bool
     {
@@ -56,7 +94,7 @@ class InputNilaiPerMapel extends Page implements HasTable
 
     /**
      * @return array<int, NavigationItem>
-    */
+     */
     public static function getNavigationItems(): array
     {
         return [];
@@ -83,7 +121,7 @@ class InputNilaiPerMapel extends Page implements HasTable
     public function getHeading(): string
     {
         return sprintf(
-            '%s — %s',
+            '%s - %s',
             $this->jadwalMengajar->mataPelajaran?->nama_mapel ?? 'Mata Pelajaran',
             $this->jadwalMengajar->kelas?->nama_kelas ?? 'Kelas',
         );
@@ -106,8 +144,11 @@ class InputNilaiPerMapel extends Page implements HasTable
     {
         return $table
             ->query(
-                Siswa::query()
-                    ->where('kelas_id', $this->jadwalMengajar->kelas_id)
+                app(KenaikanKelasService::class)
+                    ->siswaUntukKelasTahunQuery(
+                        (int) $this->jadwalMengajar->kelas_id,
+                        (int) $this->jadwalMengajar->tahun_ajaran_id,
+                    )
                     ->with([
                         'nilais' => fn (HasMany $query) => $query
                             ->where(
@@ -118,7 +159,7 @@ class InputNilaiPerMapel extends Page implements HasTable
             )
             ->defaultSort('nama_lengkap')
             ->headerActions([
-                Tables\Actions\Action::make('tambahNilai')
+                Action::make('tambahNilai')
                     ->label('Tambah Nilai')
                     ->icon('heroicon-o-plus')
                     ->color('primary')
@@ -127,6 +168,9 @@ class InputNilaiPerMapel extends Page implements HasTable
                         'Isi nilai seluruh siswa sekaligus. Nilai lama akan dimuat otomatis dan dapat diperbarui.'
                     )
                     ->modalWidth('7xl')
+                    ->extraModalWindowAttributes([
+                        'class' => 'raport-input-nilai-modal',
+                    ])
                     ->modalSubmitActionLabel('Simpan Nilai')
                     ->modalCancelActionLabel('Batal')
                     ->fillForm(fn (): array => [
@@ -147,29 +191,29 @@ class InputNilaiPerMapel extends Page implements HasTable
                         'nilai_siswa' => app(NilaiBatchService::class)
                             ->rowsForSchedule($this->jadwalMengajar),
                     ])
-                    ->form([
-                        Forms\Components\Section::make('Identitas Penilaian')
+                    ->schema([
+                        Section::make('Identitas Penilaian')
                             ->schema([
-                                Forms\Components\TextInput::make('kode_mapel')
+                                TextInput::make('kode_mapel')
                                     ->label('Kode Mata Pelajaran')
                                     ->disabled()
                                     ->dehydrated(false),
 
-                                Forms\Components\TextInput::make('nama_mapel')
+                                TextInput::make('nama_mapel')
                                     ->label('Mata Pelajaran')
                                     ->disabled()
                                     ->dehydrated(false),
 
-                                Forms\Components\TextInput::make('kelas')
+                                TextInput::make('kelas')
                                     ->label('Kelas')
                                     ->disabled()
                                     ->dehydrated(false),
                             ])
                             ->columns(3),
 
-                        Forms\Components\Section::make('Pengaturan Nilai')
+                        Section::make('Pengaturan Nilai')
                             ->schema([
-                                Forms\Components\TextInput::make('kkm')
+                                TextInput::make('kkm')
                                     ->label('KKM')
                                     ->numeric()
                                     ->integer()
@@ -180,7 +224,7 @@ class InputNilaiPerMapel extends Page implements HasTable
                                         'KKM ini berlaku untuk guru, mapel, dan tahun ajaran yang sama.'
                                     ),
 
-                                Forms\Components\Textarea::make('deskripsi')
+                                Textarea::make('deskripsi')
                                     ->label('Deskripsi')
                                     ->rows(4)
                                     ->maxLength(1000)
@@ -192,28 +236,35 @@ class InputNilaiPerMapel extends Page implements HasTable
                             ])
                             ->columns(2),
 
-                        Forms\Components\Section::make('Nilai Siswa')
+                        Section::make('Nilai Siswa')
                             ->description(
                                 'Indeks ketercapaian dihitung otomatis berdasarkan nilai angka.'
                             )
                             ->schema([
-                                Forms\Components\Repeater::make('nilai_siswa')
+                                Repeater::make('nilai_siswa')
                                     ->label('')
+                                    ->itemLabel(static fn (array $state): ?string => filled($state['nama_lengkap'] ?? null)
+                                        ? sprintf(
+                                            '%s - %s',
+                                            $state['nama_lengkap'],
+                                            $state['nisn'] ?? '-'
+                                        )
+                                        : 'Siswa')
                                     ->schema([
-                                        Forms\Components\Hidden::make('siswa_id')
+                                        Hidden::make('siswa_id')
                                             ->required(),
 
-                                        Forms\Components\TextInput::make('nisn')
+                                        TextInput::make('nisn')
                                             ->label('NISN')
                                             ->disabled()
                                             ->dehydrated(false),
 
-                                        Forms\Components\TextInput::make('nama_lengkap')
+                                        TextInput::make('nama_lengkap')
                                             ->label('Nama Siswa')
                                             ->disabled()
                                             ->dehydrated(false),
 
-                                        Forms\Components\TextInput::make('nilai_angka')
+                                        TextInput::make('nilai_angka')
                                             ->label('Nilai')
                                             ->numeric()
                                             ->integer()
@@ -222,7 +273,7 @@ class InputNilaiPerMapel extends Page implements HasTable
                                             ->required()
                                             ->live(onBlur: true),
 
-                                        Forms\Components\Placeholder::make(
+                                        Placeholder::make(
                                             'indeks_preview',
                                         )
                                             ->label('Ketercapaian')
@@ -264,16 +315,16 @@ class InputNilaiPerMapel extends Page implements HasTable
                     }),
             ])
             ->columns([
-                Tables\Columns\TextColumn::make('nisn')
+                TextColumn::make('nisn')
                     ->label('NISN')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('nama_lengkap')
+                TextColumn::make('nama_lengkap')
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('nilai')
+                TextColumn::make('nilai')
                     ->label('Nilai')
                     ->badge()
                     ->state(fn (Siswa $record): string => (string) (
@@ -283,7 +334,7 @@ class InputNilaiPerMapel extends Page implements HasTable
                         ? 'gray'
                         : 'success'),
 
-                Tables\Columns\TextColumn::make('indeks_ketercapaian')
+                TextColumn::make('indeks_ketercapaian')
                     ->label('Ketercapaian')
                     ->badge()
                     ->state(fn (Siswa $record): string => $this->nilaiSiswa(
@@ -293,7 +344,7 @@ class InputNilaiPerMapel extends Page implements HasTable
                         $this->nilaiSiswa($record)?->indeks_ketercapaian,
                     )),
 
-                Tables\Columns\TextColumn::make('deskripsi_nilai')
+                TextColumn::make('deskripsi_nilai')
                     ->label('Deskripsi')
                     ->state(fn (Siswa $record): string => $this->nilaiSiswa(
                         $record,
@@ -392,24 +443,24 @@ class InputNilaiPerMapel extends Page implements HasTable
         return $query->where('guru_id', $user?->guru?->getKey() ?? 0);
     }
 
-    private static function navigationLabel(JadwalMengajar $jadwalMengajar): string
-    {
-        $label = sprintf(
-            '%s — %s',
-            $jadwalMengajar->mataPelajaran?->nama_mapel ?? 'Mata Pelajaran',
-            $jadwalMengajar->kelas?->nama_kelas ?? 'Kelas',
-        );
+    // private static function navigationLabel(JadwalMengajar $jadwalMengajar): string
+    // {
+    //     $label = sprintf(
+    //         '%s - %s',
+    //         $jadwalMengajar->mataPelajaran?->nama_mapel ?? 'Mata Pelajaran',
+    //         $jadwalMengajar->kelas?->nama_kelas ?? 'Kelas',
+    //     );
 
-        if (auth()->user()?->isAdmin()) {
-            return sprintf(
-                '%s • %s',
-                $jadwalMengajar->guru?->nama ?? 'Guru',
-                $label,
-            );
-        }
+    //     if (auth()->user()?->isAdmin()) {
+    //         return sprintf(
+    //             '%s - %s',
+    //             $jadwalMengajar->guru?->nama ?? 'Guru',
+    //             $label,
+    //         );
+    //     }
 
-        return $label;
-    }
+    //     return $label;
+    // }
 
     private function nilaiSiswa(Siswa $siswa): ?Nilai
     {

@@ -3,7 +3,7 @@
 namespace App\Filament\Admin\Resources\JadwalMengajarResource\Pages;
 
 use App\Filament\Admin\Resources\JadwalMengajarResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListJadwalMengajars extends ListRecords
@@ -18,7 +18,7 @@ class ListJadwalMengajars extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->label('Atur Pengajar Kelas')
                 ->icon('heroicon-o-user-group')
                 ->color('primary'),

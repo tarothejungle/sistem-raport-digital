@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Kelas extends Model
 {
@@ -31,9 +31,20 @@ class Kelas extends Model
     {
         return $this->belongsTo(Guru::class, 'wali_kelas_id');
     }
+
     public function siswas(): HasMany
     {
         return $this->hasMany(Siswa::class);
+    }
+
+    public function siswaAktif(): HasMany
+    {
+        return $this->hasMany(Siswa::class)->where('status', Siswa::STATUS_AKTIF);
+    }
+
+    public function riwayatKelasSiswas(): HasMany
+    {
+        return $this->hasMany(RiwayatKelasSiswa::class);
     }
 
     public function jadwalMengajars(): HasMany

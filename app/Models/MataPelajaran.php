@@ -19,7 +19,6 @@ class MataPelajaran extends Model
     /**
      * @return array<string, string>
      */
-
     public function jadwalMengajars(): HasMany
     {
         return $this->hasMany(JadwalMengajar::class, 'mapel_id');
