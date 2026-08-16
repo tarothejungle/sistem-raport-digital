@@ -118,7 +118,7 @@ class Login extends \Filament\Auth\Pages\Login
     protected function getAuthenticateFormAction(): Action
     {
         return parent::getAuthenticateFormAction()
-            ->label('Masuk ke Sistem')
+            ->label('Login ke Sistem')
             ->icon(null)
             ->extraAttributes([
                 'class' => 'srd-login-submit',
@@ -157,7 +157,7 @@ class Login extends \Filament\Auth\Pages\Login
             $this->dispatchTurnstileReset();
 
             throw ValidationException::withMessages([
-                'data.login' => 'Akun ini belum memiliki akses ke portal rapor.',
+                'data.login' => 'Akun ini belum terdaftar, Silakan hubungi administrator.',
             ]);
         }
 

@@ -34,7 +34,7 @@
         {{-- Form panel --}}
         <section class="srd-login-panel srd-login-panel--form" aria-label="Form masuk">
             <div class="srd-login-theme">
-                <x-filament-panels::theme-switcher />
+                <x-filament-panels::theme-switcher/>
             </div>
 
             <div class="srd-login-form">

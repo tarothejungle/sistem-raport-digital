@@ -3444,11 +3444,13 @@ html.dark .raport-login-card .fi-theme-switcher {
 
 :root {
     --srd-login-canvas: #ffffff;
-    --srd-login-canvas-dark: #000000;
-    --srd-login-art: #e5ebff;
-    --srd-login-art-dark: #000a33;
-    --srd-login-surface: #000a33;
-    --srd-login-surface-dark: #e5ebff;
+    --srd-login-canvas-dark: #292F36;
+    --srd-login-art: #000a33;
+    --srd-login-art-dark: #E5EBFF;
+    --srd-login-surface: #E5EBFF;
+    --srd-login-surface-dark: #000a33;
+    --srd-login-text: #000a33;
+    --srd-login-text-dark: #ffffff;
     --srd-login-ink: #ffffff;
     --srd-login-muted: #c7d2fe;
     --srd-login-border: #d8dfeb;
@@ -3602,12 +3604,12 @@ html.dark .srd-login-panel--form {
     padding: 3px;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.09) !important;
+    background: var(--srd-login-surface-dark) !important;
 }
 
 html.dark .srd-login-theme .fi-theme-switcher {
     border-color: #c8d2e8 !important;
-    background: rgba(255, 255, 255, 0.58) !important;
+    background: var(--srd-login-surface) !important;
 }
 
 .srd-login-theme .fi-theme-switcher-btn {
@@ -3664,7 +3666,7 @@ html.dark .srd-login-form-brand__image--dark {
 
 .srd-login-form-heading {
     margin: 0;
-    color: var(--srd-login-ink);
+    color: var(--srd-login-text);
     font-size: 1rem;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -3673,7 +3675,7 @@ html.dark .srd-login-form-brand__image--dark {
 }
 
 html.dark .srd-login-form-heading {
-    color: #000a33;
+    color: var(--srd-login-text-dark);
 }
 
 .srd-login-form .fi-sc-form,
@@ -3720,7 +3722,7 @@ html.dark .srd-login-form-heading {
 
 .srd-login-form .fi-fo-field-label,
 .srd-login-form .fi-fo-field-label-content {
-    color: #ffffff !important;
+    color: var(--srd-login-text) !important;
     font-family: inherit !important;
     font-size: 0.76rem !important;
     font-weight: 500 !important;
@@ -3729,7 +3731,7 @@ html.dark .srd-login-form-heading {
 
 html.dark .srd-login-form .fi-fo-field-label,
 html.dark .srd-login-form .fi-fo-field-label-content {
-    color: #000a33 !important;
+    color: var(--srd-login-text-dark) !important;
 }
 
 .srd-login-form .fi-input-wrp {
@@ -3807,17 +3809,17 @@ html.dark .srd-login-form .fi-fo-field-label-content {
     align-items: center;
     gap: 8px;
     min-height: 32px;
-    color: #ffffff !important;
+    color: var(--srd-login-text) !important;
     cursor: pointer;
 }
 
 .srd-login-form .srd-login-remember .fi-fo-field-label-content {
-    color: #ffffff !important;
+    color: var(--srd-login-text) !important;
 }
 
 html.dark .srd-login-form .srd-login-remember .fi-fo-field-label,
 html.dark .srd-login-form .srd-login-remember .fi-fo-field-label-content {
-    color: #000a33 !important;
+    color: var(--srd-login-text-dark) !important;
 }
 
 .srd-login-form .srd-login-remember .fi-checkbox-input {
@@ -3829,7 +3831,7 @@ html.dark .srd-login-form .srd-login-remember .fi-fo-field-label-content {
 }
 
 .srd-login-reset-link {
-    color: #ffffff !important;
+    color: var(--srd-login-text) !important;
     font-size: 0.72rem;
     font-weight: 500;
     text-decoration: none;
@@ -3842,7 +3844,7 @@ html.dark .srd-login-form .srd-login-remember .fi-fo-field-label-content {
 }
 
 html.dark .srd-login-reset-link {
-    color: #000a33 !important;
+    color: var(--srd-login-text-dark) !important;
 }
 
 .srd-login-form .srd-login-turnstile,
@@ -3883,12 +3885,18 @@ html.dark .srd-login-reset-link {
     margin: 0 !important;
     border: 1px solid #d5dbe6 !important;
     border-radius: 14px !important;
-    background: #ffffff !important;
+    background: var(--srd-login-surface-dark) !important;
     box-shadow: 0 8px 18px rgba(0, 8, 48, 0.16) !important;
-    color: #06196b !important;
+    color: var(--srd-login-text-dark) !important;
     font-family: inherit !important;
     font-size: 0.86rem !important;
     font-weight: 700 !important;
+}
+
+html.dark .srd-login-form .srd-login-submit.fi-btn {
+    background: var(--srd-login-surface) !important;
+    box-shadow: 0 8px 18px rgba(0, 8, 48, 0.16) !important;
+    color: var(--srd-login-text) !important;
 }
 
 .srd-login-form .srd-login-submit.fi-btn:hover:not(:disabled) {
