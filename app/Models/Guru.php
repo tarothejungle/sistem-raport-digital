@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Guru extends Model
 {
+    protected $table = 'guru';
+
     /**
      * @var array<int, string>
      */
     protected $fillable = [
         'user_id',
-        // 'nik',
         'no_telp',
         'tempat_lahir',
         'tanggal_lahir',

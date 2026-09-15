@@ -13,16 +13,84 @@ use App\Models\Kelas;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\On;
 
-class RaportCommandCenter extends Widget
+class RaportCommandCenter extends Widget implements HasActions, HasSchemas
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
     protected string $view = 'filament.admin.widgets.raport-command-center';
 
     protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';
+
+    /**
+     * Rendered for every authenticated panel user; the view data itself is
+     * scoped per role in getViewData().
+     */
+    public static function canView(): bool
+    {
+        return auth()->check();
+    }
+
+    /**
+     * The avatar lives in the guru profile card, so the card has to re-render
+     * once the delete action removes it.
+     */
+    #[On('avatarDeleted')]
+    public function refreshAfterAvatarDeleted(): void
+    {
+        // The attribute alone triggers a re-render; no state to reset.
+    }
+
+    public function deleteAvatar(): void
+    {
+        $user = auth()->user();
+
+        if ($user === null || blank($user->avatar_path)) {
+            return;
+        }
+
+        Storage::disk('public')->delete($user->avatar_path);
+        $user->update(['avatar_path' => null]);
+        $user->refresh();
+
+        Notification::make()
+            ->success()
+            ->title('Foto profil berhasil dihapus.')
+            ->send();
+
+        $this->dispatch('avatarDeleted');
+        $this->dispatch('profile-avatar-updated', url: Filament::getUserAvatarUrl($user));
+    }
+
+    public function deleteAvatarAction(): Action
+    {
+        return Action::make('deleteAvatar')
+            ->label('Hapus foto')
+            ->color('danger')
+            ->extraAttributes(['class' => 'raport-delete-avatar-action'])
+            ->requiresConfirmation()
+            ->modalHeading('Hapus foto profil?')
+            ->modalDescription('Foto akan dihapus dari akun dan avatar akan kembali memakai inisial nama. Tindakan ini tidak dapat dibatalkan.')
+            ->modalSubmitActionLabel('Ya, hapus foto')
+            ->modalCancelActionLabel('Batal')
+            ->action(function (): void {
+                $this->deleteAvatar();
+            });
+    }
 
     /**
      * @return array<string, mixed>
@@ -35,6 +103,8 @@ class RaportCommandCenter extends Widget
                 ...$this->guruDashboardData(),
             ];
         }
+
+        $isSiswa = auth()->user()?->isSiswa() ?? false;
 
         $tahunAjaran = TahunAjaran::query()
             ->where('is_active', true)
@@ -53,10 +123,15 @@ class RaportCommandCenter extends Widget
             'averageProgress' => $totalKelas > 0
                 ? (int) round(collect($progressRows)->avg('progress'))
                 : 0,
+            'heroDescription' => $isSiswa
+                ? 'Lihat nilai yang sudah dibagikan dan informasi periode akademik Anda.'
+                : 'Pantau kelengkapan nilai, akses alur kerja utama, dan siapkan rapor pada periode aktif.',
+            'heroTitle' => $isSiswa ? 'Ringkasan Akademik Saya' : 'Status Kesiapan Rapor',
             'kelasSiap' => $kelasSiap,
             'progressRows' => $progressRows,
             'periodeLabel' => $tahunAjaran?->label ?? 'Belum ada tahun ajaran aktif',
             'roleLabel' => $this->roleLabel(),
+            'showProgressPanel' => ! $isSiswa,
             'totalActions' => count($actions),
             'totalKelas' => $totalKelas,
         ];
@@ -270,8 +345,14 @@ class RaportCommandCenter extends Widget
         $user = auth()->user();
         $guruId = $user?->guru?->getKey();
 
+        // Class-wide progress is staff information: a student must never see
+        // other classes, their homeroom teachers, or their grading progress.
+        if ($user === null || $user->isSiswa()) {
+            return [];
+        }
+
         $kelasQuery = Kelas::query()
-            ->with('waliKelas')
+            ->with(['waliKelas.user'])
             ->withCount('siswaAktif')
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')

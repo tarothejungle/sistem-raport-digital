@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
 class RaportPdfController extends Controller
@@ -54,16 +55,20 @@ class RaportPdfController extends Controller
         Request $request,
         TahunAjaran $tahunAjaran,
         RaportPdfService $raportPdfService,
-    ): Response {
+    ): BinaryFileResponse {
         abort_unless(class_exists(ZipArchive::class), 500, 'Ekstensi ZIP PHP belum aktif.');
 
-        $ids = collect(explode(',', (string) $request->query('siswa')))
+        $rawIds = (string) $request->query('siswa');
+        abort_if(strlen($rawIds) > 2000, 422, 'Daftar siswa terlalu panjang.');
+
+        $ids = collect(explode(',', $rawIds))
             ->map(static fn (string $id): int => (int) trim($id))
             ->filter(static fn (int $id): bool => $id > 0)
             ->unique()
             ->values();
 
         abort_if($ids->isEmpty(), 404);
+        abort_if($ids->count() > 30, 422, 'Maksimal 30 rapor per unduhan.');
 
         $siswas = Siswa::query()
             ->whereKey($ids)
@@ -85,13 +90,20 @@ class RaportPdfController extends Controller
 
         abort_unless($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 500, 'File ZIP gagal dibuat.');
 
-        foreach ($siswas as $siswa) {
-            $this->authorizeCetakRapor($siswa, $tahunAjaran);
+        try {
+            foreach ($siswas as $siswa) {
+                $this->authorizeCetakRapor($siswa, $tahunAjaran);
 
-            $zip->addFromString(
-                $this->fileName($siswa, $tahunAjaran),
-                $this->makePdf($siswa, $tahunAjaran, $raportPdfService)->output(),
-            );
+                $zip->addFromString(
+                    $this->fileName($siswa, $tahunAjaran),
+                    $this->makePdf($siswa, $tahunAjaran, $raportPdfService)->output(),
+                );
+            }
+        } catch (\Throwable $exception) {
+            $zip->close();
+            @unlink($zipPath);
+
+            throw $exception;
         }
 
         $zip->close();

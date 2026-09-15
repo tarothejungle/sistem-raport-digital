@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class PengaturanMadrasah extends Model
 {
+    protected $table = 'pengaturan_madrasah';
+
     /**
      * @var array<int, string>
      */

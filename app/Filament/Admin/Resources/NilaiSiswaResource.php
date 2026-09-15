@@ -14,6 +14,8 @@ class NilaiSiswaResource extends Resource
 {
     protected static ?string $model = Nilai::class;
 
+    protected static ?string $slug = 'nilai-siswa';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Portal Siswa';

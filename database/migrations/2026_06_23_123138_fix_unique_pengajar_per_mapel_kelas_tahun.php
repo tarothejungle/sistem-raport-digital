@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('jadwal_mengajars', function (Blueprint $table): void {
+        Schema::table('jadwal_mengajar', function (Blueprint $table): void {
             /*
             * Index tunggal ini wajib dibuat lebih dulu karena foreign key guru_id
             * sebelumnya memakai index unique lama sebagai penopang relasi.
@@ -35,7 +35,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('jadwal_mengajars', function (Blueprint $table): void {
+        Schema::table('jadwal_mengajar', function (Blueprint $table): void {
             $table->dropUnique('jadwal_mengajar_unique_mapel_kelas_tahun');
             $table->dropUnique('jadwal_mengajar_unique_guru_mapel_tahun');
 

@@ -38,18 +38,18 @@ class KenaikanKelasServiceTest extends TestCase
         );
 
         $this->assertSame(1, $summary['promoted']);
-        $this->assertDatabaseHas('siswas', [
+        $this->assertDatabaseHas('siswa', [
             'id' => $siswa->getKey(),
             'kelas_id' => $kelasDua->getKey(),
             'status' => Siswa::STATUS_AKTIF,
         ]);
-        $this->assertDatabaseHas('riwayat_kelas_siswas', [
+        $this->assertDatabaseHas('riwayat_kelas_siswa', [
             'siswa_id' => $siswa->getKey(),
             'tahun_ajaran_id' => $sourceYear->getKey(),
             'kelas_id' => $kelasSatu->getKey(),
             'status' => RiwayatKelasSiswa::STATUS_AKTIF,
         ]);
-        $this->assertDatabaseHas('riwayat_kelas_siswas', [
+        $this->assertDatabaseHas('riwayat_kelas_siswa', [
             'siswa_id' => $siswa->getKey(),
             'tahun_ajaran_id' => $targetYear->getKey(),
             'kelas_id' => $kelasDua->getKey(),
@@ -84,14 +84,14 @@ class KenaikanKelasServiceTest extends TestCase
         );
 
         $this->assertSame(1, $summary['graduated']);
-        $this->assertDatabaseHas('siswas', [
+        $this->assertDatabaseHas('siswa', [
             'id' => $siswa->getKey(),
             'kelas_id' => $kelasEnam->getKey(),
             'status' => Siswa::STATUS_ALUMNI,
             'tahun_lulus_id' => $sourceYear->getKey(),
             'tanggal_lulus' => '2026-06-30 00:00:00',
         ]);
-        $this->assertDatabaseHas('riwayat_kelas_siswas', [
+        $this->assertDatabaseHas('riwayat_kelas_siswa', [
             'siswa_id' => $siswa->getKey(),
             'tahun_ajaran_id' => $sourceYear->getKey(),
             'kelas_id' => $kelasEnam->getKey(),

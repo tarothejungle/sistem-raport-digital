@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Siswa extends Model
 {
+    protected $table = 'siswa';
+
     public const STATUS_AKTIF = 'aktif';
 
     public const STATUS_ALUMNI = 'alumni';

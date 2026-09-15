@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Nilai extends Model
 {
+    protected $table = 'nilai';
+
     /**
      * @var array<int, string>
      */

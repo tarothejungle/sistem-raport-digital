@@ -440,27 +440,15 @@ class InputNilaiPerMapel extends Page implements HasTable
             return $query;
         }
 
-        return $query->where('guru_id', $user?->guru?->getKey() ?? 0);
+        // Mirror canManageJadwal(): a teacher whose input permission was
+        // revoked must not see the schedule list either, otherwise the sidebar
+        // advertises links that abort(403) on click.
+        if (! $user?->isGuru() || $user->guru?->can_input_nilai !== true) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('guru_id', $user->guru?->getKey() ?? 0);
     }
-
-    // private static function navigationLabel(JadwalMengajar $jadwalMengajar): string
-    // {
-    //     $label = sprintf(
-    //         '%s - %s',
-    //         $jadwalMengajar->mataPelajaran?->nama_mapel ?? 'Mata Pelajaran',
-    //         $jadwalMengajar->kelas?->nama_kelas ?? 'Kelas',
-    //     );
-
-    //     if (auth()->user()?->isAdmin()) {
-    //         return sprintf(
-    //             '%s - %s',
-    //             $jadwalMengajar->guru?->nama ?? 'Guru',
-    //             $label,
-    //         );
-    //     }
-
-    //     return $label;
-    // }
 
     private function nilaiSiswa(Siswa $siswa): ?Nilai
     {

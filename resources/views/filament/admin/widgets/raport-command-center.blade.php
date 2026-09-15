@@ -1,8 +1,8 @@
 <x-filament-widgets::widget>
     @if ($isGuruDashboard ?? false)
-        <div class="raport-guru-dashboard">
-            <div class="raport-guru-profile-grid">
-                <section class="raport-guru-card raport-guru-profile-card" aria-labelledby="guru-profile-heading">
+        <div class="raport-guru-dashboard h-auto w-full pb-12 md:pb-6">
+            <div class="raport-guru-profile-grid grid h-auto w-full grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6">
+                <section class="raport-guru-card raport-guru-profile-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl" aria-labelledby="guru-profile-heading">
                     <div class="raport-guru-profile-card__main">
                         <div class="raport-guru-avatar">
                             @if ($guruProfile['avatarUrl'])
@@ -25,17 +25,11 @@
                     </div>
 
                     <div class="raport-guru-profile-card__actions">
-                        <a href="{{ $guruProfile['editProfileUrl'] }}" wire:navigate class="raport-btn-primary">
+                        <a href="{{ $guruProfile['editProfileUrl'] }}" class="raport-btn-primary">
                             Ubah profil
                         </a>
                         @if ($guruProfile['avatarUrl'])
-                            <button
-                                type="button"
-                                class="raport-btn-danger-outline"
-                                wire:click="$dispatch('openDeleteAvatarModal')"
-                            >
-                                Hapus foto
-                            </button>
+                            {{ $this->deleteAvatarAction }}
                         @else
                             <span class="raport-btn-ghost-disabled">
                                 Belum ada foto
@@ -44,7 +38,7 @@
                     </div>
                 </section>
 
-                <section class="raport-guru-card raport-guru-detail-card" aria-labelledby="guru-detail-heading">
+                <section class="raport-guru-card raport-guru-detail-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl" aria-labelledby="guru-detail-heading">
                     <div class="raport-guru-detail-card__title">
                         <span class="raport-guru-detail-card__icon" aria-hidden="true">
                             <x-filament::icon icon="heroicon-o-identification" class="h-5 w-5" />
@@ -66,7 +60,7 @@
                 </section>
             </div>
 
-            <section class="raport-guru-card raport-guru-teaching-card" aria-labelledby="guru-teaching-heading">
+            <section class="raport-guru-card raport-guru-teaching-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl" aria-labelledby="guru-teaching-heading">
                 <div class="raport-guru-teaching-card__header">
                     <div>
                         <span class="raport-eyebrow">Prioritas Anda</span>
@@ -93,7 +87,7 @@
                                             <span class="raport-guru-table__kelas">{{ $row['kelas'] }}</span>
                                         </td>
                                         <td>
-                                            <a href="{{ $row['inputUrl'] }}" wire:navigate class="raport-guru-table__mapel-link">{{ $row['mapel'] }}</a>
+                                            <a href="{{ $row['inputUrl'] }}" class="raport-guru-table__mapel-link">{{ $row['mapel'] }}</a>
                                             <span class="raport-guru-table__meta">{{ $row['submittedCount'] }} dari {{ $row['studentCount'] }} siswa</span>
                                         </td>
                                         <td>
@@ -120,7 +114,7 @@
                                 <div class="raport-guru-mobile-item__top">
                                     <div class="raport-guru-mobile-item__identity">
                                         <span class="raport-guru-mobile-item__kelas">Kelas {{ $row['kelas'] }}</span>
-                                        <a href="{{ $row['inputUrl'] }}" wire:navigate class="raport-guru-mobile-item__mapel">
+                                        <a href="{{ $row['inputUrl'] }}" class="raport-guru-mobile-item__mapel">
                                             {{ $row['mapel'] }}
                                         </a>
                                     </div>
@@ -151,56 +145,59 @@
 
         </div>
 
-        <livewire:delete-avatar-modal />
-
     @else
-        <div class="raport-dashboard-stack">
-        <section class="raport-dashboard-hero">
+         <div class="raport-dashboard-stack h-auto w-full overflow-visible pb-12 md:pb-6">
+        <section class="raport-dashboard-hero raport-readiness-card flex flex-col items-stretch justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:flex-row lg:items-center dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl">
             <div class="raport-dashboard-hero__copy">
                 <span class="raport-eyebrow">{{ $roleLabel }}</span>
-                <h2 class="raport-dashboard-hero__title">Status Kesiapan Rapor</h2>
-                <p class="raport-dashboard-hero__description">
-                    Pantau kelengkapan nilai, akses alur kerja utama, dan siapkan rapor pada periode aktif.
+                <h2 class="raport-dashboard-hero__title font-bold text-slate-900 dark:text-white">{{ $heroTitle }}</h2>
+                <p class="raport-dashboard-hero__description text-slate-600 dark:text-slate-400">
+                    {{ $heroDescription }}
                 </p>
 
-                <div class="raport-dashboard-hero__chips">
-                    <span>
+                <div class="raport-dashboard-hero__chips mt-4 flex flex-wrap gap-2">
+                    <span class="raport-dashboard-chip bg-slate-50 text-slate-800 dark:bg-slate-950/80 dark:text-slate-200">
                         <x-filament::icon icon="heroicon-o-calendar-days" class="h-4 w-4" />
                         Periode berjalan
                     </span>
-                    <span>
+                    <a href="#raport-quick-actions" class="raport-dashboard-chip bg-slate-50 text-slate-800 dark:bg-slate-950/80 dark:text-slate-200">
                         <x-filament::icon icon="heroicon-o-bolt" class="h-4 w-4" />
-                        {{ $totalActions }} aksi cepat
-                    </span>
+                        Aksi cepat · {{ $totalActions }}
+                    </a>
                 </div>
             </div>
 
-            <div class="raport-dashboard-hero__visual">
-                <div
-                    class="raport-progress-ring"
-                    style="--progress: {{ $averageProgress }}%;"
-                    aria-label="Rata-rata kemajuan {{ $averageProgress }} persen"
-                >
-                    <span>{{ $averageProgress }}%</span>
-                    <small>Kemajuan</small>
-                </div>
+            <div class="raport-dashboard-hero__visual flex w-full flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-100/80 p-6 lg:w-auto dark:border-white/10 dark:bg-slate-950/60">
+                @if ($showProgressPanel)
+                    <div
+                        class="raport-progress-ring"
+                        style="--progress: {{ $averageProgress }}%;"
+                        aria-label="Rata-rata kemajuan {{ $averageProgress }} persen"
+                    >
+                        <span class="text-slate-900 dark:text-white">{{ $averageProgress }}%</span>
+                        <small>Kemajuan</small>
+                    </div>
+                @endif
 
                 <div class="raport-dashboard-hero__metrics">
-                    <div class="raport-mini-metric">
+                    <div class="raport-mini-metric border border-slate-200 bg-white dark:border-white/5 dark:bg-slate-950/60">
                         <span class="raport-mini-metric__label">Periode</span>
                         <span class="raport-mini-metric__value">{{ $periodeLabel }}</span>
                     </div>
 
-                    <div class="raport-mini-metric">
-                        <span class="raport-mini-metric__label">Kelas Siap</span>
-                        <span class="raport-mini-metric__value">{{ $kelasSiap }} / {{ $totalKelas }}</span>
-                    </div>
+                    @if ($showProgressPanel)
+                        <div class="raport-mini-metric border border-slate-200 bg-white dark:border-white/5 dark:bg-slate-950/60">
+                            <span class="raport-mini-metric__label">Kelas Siap</span>
+                            <span class="raport-mini-metric__value">{{ $kelasSiap }} / {{ $totalKelas }}</span>
+                        </div>
+                    @endif
                 </div>
             </div>
         </section>
 
-        <div class="raport-command-center">
-            <section class="raport-panel raport-panel--progress">
+        <div class="raport-command-center grid h-auto w-full grid-cols-1 gap-4 overflow-visible lg:gap-6 @unless ($showProgressPanel) raport-command-center--single @endunless">
+            @if ($showProgressPanel)
+            <section class="raport-panel raport-panel--progress rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl">
                 <div class="raport-panel__header">
                     <div>
                         <h2 class="raport-panel__title">Kemajuan Rapor per Kelas</h2>
@@ -281,8 +278,9 @@
                     </p>
                 @endif
             </section>
+            @endif
 
-            <section class="raport-panel">
+            <section id="raport-quick-actions" class="raport-panel scroll-mt-24 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl">
                 <div class="raport-panel__header">
                     <div>
                         <h2 class="raport-panel__title">Aksi Cepat</h2>
@@ -290,13 +288,12 @@
                     </div>
                 </div>
 
-                <div class="raport-actions">
+                <div class="raport-actions grid h-auto w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1 lg:gap-6">
                     @foreach ($actions as $action)
                         @if ($action['url'])
                             <a
                                 class="raport-action raport-action--{{ $action['tone'] }}"
                                 href="{{ $action['url'] }}"
-                                wire:navigate
                             >
                                 <span class="raport-action__icon">
                                     <x-filament::icon :icon="$action['icon']" class="h-6 w-6" />
@@ -334,4 +331,6 @@
         </div>
         </div>
     @endif
+
+    <x-filament-actions::modals />
 </x-filament-widgets::widget>

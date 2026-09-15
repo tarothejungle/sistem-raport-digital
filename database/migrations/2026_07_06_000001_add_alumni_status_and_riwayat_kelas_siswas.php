@@ -8,23 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('siswas', function (Blueprint $table): void {
+        Schema::table('siswa', function (Blueprint $table): void {
             $table->string('status', 20)->default('aktif')->index();
             $table->foreignId('tahun_lulus_id')
                 ->nullable()
-                ->constrained('tahun_ajarans')
+                ->constrained('tahun_ajaran')
                 ->nullOnDelete();
             $table->date('tanggal_lulus')->nullable();
             $table->string('keterangan_alumni')->nullable();
         });
 
-        Schema::create('riwayat_kelas_siswas', function (Blueprint $table): void {
+        Schema::create('riwayat_kelas_siswa', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('siswa_id')
-                ->constrained('siswas')
+                ->constrained('siswa')
                 ->cascadeOnDelete();
             $table->foreignId('tahun_ajaran_id')
-                ->constrained('tahun_ajarans')
+                ->constrained('tahun_ajaran')
                 ->cascadeOnDelete();
             $table->foreignId('kelas_id')
                 ->constrained('kelas')
@@ -41,9 +41,9 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('riwayat_kelas_siswas');
+        Schema::dropIfExists('riwayat_kelas_siswa');
 
-        Schema::table('siswas', function (Blueprint $table): void {
+        Schema::table('siswa', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('tahun_lulus_id');
             $table->dropColumn([
                 'status',

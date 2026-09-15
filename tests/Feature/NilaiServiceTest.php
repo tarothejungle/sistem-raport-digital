@@ -115,8 +115,10 @@ class NilaiServiceTest extends TestCase
             'kelas_id' => $kelas->getKey(),
         ]);
         $guru = Guru::query()->create([
-            'user_id' => User::factory()->create(['role' => User::ROLE_GURU])->getKey(),
-            'nip' => '198001012000011001',
+            'user_id' => User::factory()->create([
+                'role' => User::ROLE_GURU,
+                'username' => 'guru.nilai',
+            ])->getKey(),
             'can_input_nilai' => true,
         ]);
         $mataPelajaran = MataPelajaran::query()->create([

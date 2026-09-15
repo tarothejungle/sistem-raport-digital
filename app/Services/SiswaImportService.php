@@ -11,6 +11,14 @@ use ZipArchive;
 
 final class SiswaImportService
 {
+    private const MAX_ROWS = 5000;
+
+    private const MAX_COLUMNS = 64;
+
+    private const MAX_XLSX_ENTRIES = 256;
+
+    private const MAX_XLSX_UNCOMPRESSED_BYTES = 20_000_000;
+
     /**
      * @return array{created: int, updated: int, skipped: int}
      */
@@ -239,6 +247,18 @@ final class SiswaImportService
 
         try {
             while (($row = fgetcsv($handle)) !== false) {
+                if (count($rows) >= self::MAX_ROWS) {
+                    throw ValidationException::withMessages([
+                        'file' => 'File impor maksimal berisi 5.000 baris.',
+                    ]);
+                }
+
+                if (count($row) > self::MAX_COLUMNS) {
+                    throw ValidationException::withMessages([
+                        'file' => 'File impor maksimal berisi 64 kolom.',
+                    ]);
+                }
+
                 $rows[] = array_map(
                     static fn (mixed $value): string => trim((string) $value),
                     $row,
@@ -281,6 +301,7 @@ final class SiswaImportService
         }
 
         try {
+            $this->validateArchiveSize($zip);
             $sheetContents = $this->firstWorksheetContents($zip);
 
             if ($sheetContents === null) {
@@ -294,6 +315,34 @@ final class SiswaImportService
             return $this->readWorksheetRows($sheetContents, $sharedStrings);
         } finally {
             $zip->close();
+        }
+    }
+
+    private function validateArchiveSize(ZipArchive $zip): void
+    {
+        if ($zip->numFiles > self::MAX_XLSX_ENTRIES) {
+            throw ValidationException::withMessages([
+                'file' => 'File Excel memiliki terlalu banyak bagian internal.',
+            ]);
+        }
+
+        $totalSize = 0;
+
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $stat = $zip->statIndex($index);
+            $size = is_array($stat) ? (int) ($stat['size'] ?? 0) : 0;
+            $compressedSize = is_array($stat) ? (int) ($stat['comp_size'] ?? 0) : 0;
+            $totalSize += $size;
+
+            if (
+                $size > self::MAX_XLSX_UNCOMPRESSED_BYTES
+                || $totalSize > self::MAX_XLSX_UNCOMPRESSED_BYTES
+                || ($compressedSize > 0 && $size / $compressedSize > 100)
+            ) {
+                throw ValidationException::withMessages([
+                    'file' => 'File Excel terlalu besar setelah diekstrak.',
+                ]);
+            }
         }
     }
 
@@ -343,6 +392,12 @@ final class SiswaImportService
         $strings = [];
 
         foreach ($xml->xpath('//x:si') ?: [] as $item) {
+            if (count($strings) >= self::MAX_ROWS * self::MAX_COLUMNS) {
+                throw ValidationException::withMessages([
+                    'file' => 'File Excel memiliki terlalu banyak teks bersama.',
+                ]);
+            }
+
             $item->registerXPathNamespace('x', $namespace);
             $parts = $item->xpath('.//x:t') ?: [];
             $strings[] = implode('', array_map(static fn (SimpleXMLElement $part): string => (string) $part, $parts));
@@ -377,6 +432,12 @@ final class SiswaImportService
         $rows = [];
 
         foreach ($xml->xpath('//x:sheetData/x:row') ?: [] as $row) {
+            if (count($rows) >= self::MAX_ROWS) {
+                throw ValidationException::withMessages([
+                    'file' => 'File impor maksimal berisi 5.000 baris.',
+                ]);
+            }
+
             $row->registerXPathNamespace('x', $namespace);
             $values = [];
 
@@ -384,6 +445,13 @@ final class SiswaImportService
                 $cell->registerXPathNamespace('x', $namespace);
                 $reference = (string) $cell['r'];
                 $columnIndex = $this->columnIndexFromReference($reference);
+
+                if ($columnIndex >= self::MAX_COLUMNS) {
+                    throw ValidationException::withMessages([
+                        'file' => 'File impor maksimal berisi 64 kolom.',
+                    ]);
+                }
+
                 $values[$columnIndex] = $this->cellValue($cell, $sharedStrings, $namespace);
             }
 

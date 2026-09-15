@@ -48,7 +48,7 @@ class CreateSuperAdminCommandTest extends TestCase
             ->expectsOutputToContain('Akun administrator gagal dibuat.')
             ->assertFailed();
 
-        $this->assertDatabaseMissing('users', ['email' => 'new@example.com']);
+        $this->assertDatabaseMissing('user', ['email' => 'new@example.com']);
     }
 
     public function test_it_rejects_an_existing_email(): void
@@ -67,7 +67,7 @@ class CreateSuperAdminCommandTest extends TestCase
             ->expectsOutputToContain('Akun administrator gagal dibuat.')
             ->assertFailed();
 
-        $this->assertDatabaseMissing('users', ['username' => 'new-admin']);
+        $this->assertDatabaseMissing('user', ['username' => 'new-admin']);
     }
 
     public function test_it_rejects_a_password_confirmation_mismatch(): void
@@ -81,6 +81,6 @@ class CreateSuperAdminCommandTest extends TestCase
             ->expectsOutputToContain('Akun administrator gagal dibuat.')
             ->assertFailed();
 
-        $this->assertDatabaseMissing('users', ['username' => 'new-admin']);
+        $this->assertDatabaseMissing('user', ['username' => 'new-admin']);
     }
 }

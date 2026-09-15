@@ -63,7 +63,7 @@ class SiswaServiceTest extends TestCase
         $this->assertTrue(Hash::check('password-siswa', (string) $siswa->user?->password));
     }
 
-    public function test_it_creates_import_account_from_nisn(): void
+    public function test_it_creates_import_account_with_an_unpredictable_password(): void
     {
         $kelas = $this->createKelas();
 
@@ -79,7 +79,7 @@ class SiswaServiceTest extends TestCase
         $this->assertSame(Siswa::STATUS_AKTIF, $siswa->status);
         $this->assertSame('100000012', $siswa->user?->username);
         $this->assertSame('siswa.100000012@login.raport.local', $siswa->user?->email);
-        $this->assertTrue(Hash::check('100000012', (string) $siswa->user?->password));
+        $this->assertFalse(Hash::check('100000012', (string) $siswa->user?->password));
     }
 
     private function createKelas(): Kelas

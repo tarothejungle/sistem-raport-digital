@@ -1,5 +1,7 @@
 <?php
 
+$trustedProxies = trim((string) env('TRUSTED_PROXIES', ''));
+
 return [
 
     /*
@@ -53,6 +55,20 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Keep proxy configuration inside a config file so it remains available
+    | after `php artisan config:cache` stops loading the .env file directly.
+    |
+    */
+
+    'trusted_proxies' => in_array($trustedProxies, ['*', '**'], true)
+        ? $trustedProxies
+        : array_values(array_filter(array_map('trim', explode(',', $trustedProxies)))),
 
     /*
     |--------------------------------------------------------------------------

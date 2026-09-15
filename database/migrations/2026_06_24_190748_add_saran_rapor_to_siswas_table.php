@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('siswas', function (Blueprint $table): void {
+        Schema::table('siswa', function (Blueprint $table): void {
             $table->text('saran_rapor')
                 ->nullable()
                 ->after('can_view_nilai');
@@ -17,7 +17,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('siswas', function (Blueprint $table): void {
+        Schema::table('siswa', function (Blueprint $table): void {
             $table->dropColumn('saran_rapor');
         });
     }

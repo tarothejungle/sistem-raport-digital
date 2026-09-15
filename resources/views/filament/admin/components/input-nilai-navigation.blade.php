@@ -15,7 +15,7 @@
 @if ($jadwalMengajars->isNotEmpty())
     <li
         id="raport-input-nilai-navigation"
-        class="fi-sidebar-item hidden raport-input-nilai__item"
+        class="fi-sidebar-item hidden"
     >
         <details
             class="group raport-input-nilai__root"
@@ -121,22 +121,33 @@
                         '.fi-sidebar-group[data-group-label="Akademik"] .fi-sidebar-group-items',
                     );
 
-                    if (!akademikItems) {
-                        return;
-                    }
+                    if (akademikItems) {
+                        const accessNilaiItem = [...akademikItems.children].find(
+                            (item) => item.textContent.trim().startsWith('Akses Nilai Siswa'),
+                        );
 
-                    const accessNilaiItem = [...akademikItems.children].find(
-                        (item) => item.textContent.trim().startsWith('Akses Nilai Siswa'),
-                    );
+                        if (navigation.parentElement !== akademikItems) {
+                            if (accessNilaiItem) {
+                                akademikItems.insertBefore(
+                                    navigation,
+                                    accessNilaiItem,
+                                );
+                            } else {
+                                akademikItems.appendChild(navigation);
+                            }
+                        }
+                    } else {
+                        // The Akademik group is only rendered when at least one of
+                        // its resources passes its own gate. A teacher who may input
+                        // grades but is neither a homeroom teacher nor allowed to see
+                        // Akses Nilai Siswa gets no group at all, so fall back to the
+                        // sidebar's own list instead of leaving the item hidden.
+                        const navGroups = document.querySelector(
+                            '.fi-sidebar-nav .fi-sidebar-nav-groups',
+                        );
 
-                    if (navigation.parentElement !== akademikItems) {
-                        if (accessNilaiItem) {
-                            akademikItems.insertBefore(
-                                navigation,
-                                accessNilaiItem,
-                            );
-                        } else {
-                            akademikItems.appendChild(navigation);
+                        if (navGroups && navigation.parentElement !== navGroups) {
+                            navGroups.appendChild(navigation);
                         }
                     }
 

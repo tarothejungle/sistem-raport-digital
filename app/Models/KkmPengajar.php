@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KkmPengajar extends Model
 {
+    protected $table = 'kkm_pengajar';
+
     protected $fillable = [
         'guru_id',
         'mapel_id',

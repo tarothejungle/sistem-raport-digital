@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CatatanRapor extends Model
 {
+    protected $table = 'catatan_rapor';
+
     /**
      * @var array<int, string>
      */

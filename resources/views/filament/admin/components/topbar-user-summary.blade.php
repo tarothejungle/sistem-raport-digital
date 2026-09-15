@@ -51,8 +51,20 @@
                 avatar.style.setProperty('object-fit', 'cover', 'important');
             };
 
+            const updateTopbarAvatar = (event) => {
+                const avatar = document.querySelector('.fi-topbar .fi-user-avatar');
+
+                if (!avatar || !event.detail.url) {
+                    return;
+                }
+
+                avatar.src = event.detail.url;
+                avatar.removeAttribute('srcset');
+            };
+
             document.addEventListener('DOMContentLoaded', applyTopbarAvatarSize);
             document.addEventListener('livewire:navigated', applyTopbarAvatarSize);
+            document.addEventListener('profile-avatar-updated', updateTopbarAvatar);
 
             setTimeout(applyTopbarAvatarSize, 300);
         })();

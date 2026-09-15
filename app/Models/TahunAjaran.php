@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TahunAjaran extends Model
 {
+    protected $table = 'tahun_ajaran';
+
     /**
      * @var array<int, string>
      */

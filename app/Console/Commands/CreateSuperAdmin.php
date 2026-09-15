@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 final class CreateSuperAdmin extends Command
@@ -30,9 +31,9 @@ final class CreateSuperAdmin extends Command
                 'string',
                 'max:50',
                 'regex:/^[a-z0-9._-]+$/',
-                'unique:users,username',
+                Rule::unique(User::class, 'username'),
             ],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:255', Rule::unique(User::class, 'email')],
             'password' => ['required', 'confirmed', Password::min(8)],
         ], [
             'username.regex' => 'Username hanya boleh berisi huruf kecil, angka, titik, garis bawah, dan tanda hubung.',

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RiwayatKelasSiswa extends Model
 {
+    protected $table = 'riwayat_kelas_siswa';
+
     public const STATUS_AKTIF = 'aktif';
 
     public const STATUS_LULUS = 'lulus';

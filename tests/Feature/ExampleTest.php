@@ -14,6 +14,19 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response
+            ->assertStatus(200)
+            ->assertSee('Master Data & Import', false)
+            ->assertSee('Penugasan & Input Nilai', false)
+            ->assertSee('Kenaikan & Kelulusan', false)
+            ->assertSee('Portal Nilai Siswa')
+            ->assertSee('Notifikasi & Akun', false);
+    }
+
+    public function test_login_page_does_not_show_the_removed_journey_copy(): void
+    {
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertDontSee('Masuk untuk melanjutkan perjalanan belajarmu.');
     }
 }

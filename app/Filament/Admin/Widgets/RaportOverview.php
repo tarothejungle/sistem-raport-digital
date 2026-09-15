@@ -41,26 +41,26 @@ class RaportOverview extends BaseWidget
         return [
             Stat::make('Siswa Terdaftar', Siswa::query()->aktif()->count())
                 ->description('Siswa aktif yang tercatat')
-                ->descriptionIcon('heroicon-m-academic-cap')
                 ->icon('heroicon-o-academic-cap')
+                ->extraAttributes(['class' => 'raport-kpi-card'])
                 ->color('primary'),
 
             Stat::make('Guru Terdaftar', Guru::query()->count())
                 ->description('Akun guru yang tersedia')
-                ->descriptionIcon('heroicon-m-user-group')
                 ->icon('heroicon-o-user-group')
+                ->extraAttributes(['class' => 'raport-kpi-card'])
                 ->color('info'),
 
             Stat::make('Kelas Terdaftar', Kelas::query()->count())
                 ->description('Kelas yang tersedia')
-                ->descriptionIcon('heroicon-m-building-library')
                 ->icon('heroicon-o-building-library')
+                ->extraAttributes(['class' => 'raport-kpi-card'])
                 ->color('info'),
 
             Stat::make('Jadwal Mengajar', JadwalMengajar::query()->count())
                 ->description('Penugasan pengajar kelas')
-                ->descriptionIcon('heroicon-m-calendar-days')
                 ->icon('heroicon-o-calendar-days')
+                ->extraAttributes(['class' => 'raport-kpi-card'])
                 ->color('warning'),
 
             Stat::make(
@@ -70,8 +70,8 @@ class RaportOverview extends BaseWidget
                     ->count(),
             )
                 ->description('Nilai yang sudah difinalisasi')
-                ->descriptionIcon('heroicon-m-clipboard-document-check')
                 ->icon('heroicon-o-clipboard-document-check')
+                ->extraAttributes(['class' => 'raport-kpi-card'])
                 ->color('success'),
 
             Stat::make('Tahun Ajaran Aktif', $jumlahTahunAjaranAktif)
@@ -79,12 +79,8 @@ class RaportOverview extends BaseWidget
                     $tahunAjaranAktif?->label
                         ?? 'Belum ada tahun ajaran aktif',
                 )
-                ->descriptionIcon(
-                    $tahunAjaranAktif !== null
-                        ? 'heroicon-m-check-circle'
-                        : 'heroicon-m-exclamation-triangle',
-                )
                 ->icon('heroicon-o-calendar')
+                ->extraAttributes(['class' => 'raport-kpi-card'])
                 ->color(
                     $tahunAjaranAktif !== null
                         ? 'success'

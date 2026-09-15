@@ -23,6 +23,8 @@ class PengaturanMadrasahResource extends Resource
 
     protected static ?string $model = PengaturanMadrasah::class;
 
+    protected static ?string $slug = 'pengaturan-madrasah';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
@@ -52,6 +54,7 @@ class PengaturanMadrasahResource extends Resource
                     FileUpload::make('logo_path')
                         ->label('Logo Madrasah')
                         ->image()
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                         ->disk('public')
                         ->directory('madrasah/logo')
                         ->visibility('public')
@@ -84,6 +87,7 @@ class PengaturanMadrasahResource extends Resource
                     FileUpload::make('ttd_kepala_path')
                         ->label('Tanda Tangan Kepala Madrasah')
                         ->image()
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                         ->disk('public')
                         ->directory('madrasah/tanda-tangan')
                         ->visibility('public')

@@ -33,7 +33,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
@@ -41,7 +41,11 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'serve' => true,
+            // Keep this host-relative by default so uploaded files resolve against
+            // whatever host is serving the request. Hardcoding APP_URL here breaks
+            // local development whenever APP_URL points at another environment.
+            'url' => rtrim(env('FILESYSTEM_PUBLIC_URL', env('ASSET_URL', '')), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

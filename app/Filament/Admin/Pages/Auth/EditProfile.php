@@ -39,6 +39,7 @@ class EditProfile extends \Filament\Auth\Pages\EditProfile
                     FileUpload::make('avatar_path')
                         ->label('Upload Foto')
                         ->image()
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                         ->avatar()
                         ->imageEditor()
                         ->imageEditorAspectRatios([
@@ -139,6 +140,16 @@ class EditProfile extends \Filament\Auth\Pages\EditProfile
         }
 
         return $record;
+    }
+
+    protected function afterSave(): void
+    {
+        $user = $this->getUser()->refresh();
+
+        $this->dispatch(
+            'profile-avatar-updated',
+            url: $user instanceof User ? $user->getFilamentAvatarUrl() : null,
+        );
     }
 
     public function deleteAvatar(): void

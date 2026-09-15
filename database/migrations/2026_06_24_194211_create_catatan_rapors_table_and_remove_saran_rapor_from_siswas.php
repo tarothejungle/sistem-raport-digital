@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('catatan_rapors', function (Blueprint $table): void {
+        Schema::create('catatan_rapor', function (Blueprint $table): void {
             $table->id();
 
             $table->foreignId('siswa_id')
-                ->constrained('siswas')
+                ->constrained('siswa')
                 ->cascadeOnDelete();
 
             $table->foreignId('tahun_ajaran_id')
-                ->constrained('tahun_ajarans')
+                ->constrained('tahun_ajaran')
                 ->cascadeOnDelete();
 
             $table->text('saran')->nullable();
@@ -29,19 +29,19 @@ return new class extends Migration
             );
         });
 
-        Schema::table('siswas', function (Blueprint $table): void {
+        Schema::table('siswa', function (Blueprint $table): void {
             $table->dropColumn('saran_rapor');
         });
     }
 
     public function down(): void
     {
-        Schema::table('siswas', function (Blueprint $table): void {
+        Schema::table('siswa', function (Blueprint $table): void {
             $table->text('saran_rapor')
                 ->nullable()
                 ->after('can_view_nilai');
         });
 
-        Schema::dropIfExists('catatan_rapors');
+        Schema::dropIfExists('catatan_rapor');
     }
 };

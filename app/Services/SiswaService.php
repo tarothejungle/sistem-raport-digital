@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class SiswaService
@@ -168,7 +169,7 @@ final class SiswaService
                     'name' => $namaLengkap,
                     'username' => $account['username'],
                     'email' => $account['email'],
-                    'password' => Hash::make($nisn),
+                    'password' => Hash::make(Str::password(32)),
                     'role' => User::ROLE_SISWA,
                 ]);
 
@@ -206,7 +207,7 @@ final class SiswaService
                     'name' => $namaLengkap,
                     'username' => $account['username'],
                     'email' => $account['email'],
-                    'password' => Hash::make($nisn),
+                    'password' => Hash::make(Str::password(32)),
                     'role' => User::ROLE_SISWA,
                 ]);
 

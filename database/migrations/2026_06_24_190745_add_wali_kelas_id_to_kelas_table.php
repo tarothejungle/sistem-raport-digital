@@ -12,7 +12,7 @@ return new class extends Migration
             $table->foreignId('wali_kelas_id')
                 ->nullable()
                 ->after('tingkat')
-                ->constrained('gurus')
+                ->constrained('guru')
                 ->nullOnDelete();
         });
     }

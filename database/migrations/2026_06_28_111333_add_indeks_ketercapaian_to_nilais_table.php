@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('nilais', function (Blueprint $table): void {
+        Schema::table('nilai', function (Blueprint $table): void {
             $table->string('indeks_ketercapaian', 20)
                 ->nullable()
                 ->after('predikat');
@@ -17,7 +17,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('nilais', function (Blueprint $table): void {
+        Schema::table('nilai', function (Blueprint $table): void {
             $table->dropColumn('indeks_ketercapaian');
         });
     }

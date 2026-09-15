@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('gurus', function (Blueprint $table): void {
+        Schema::table('guru', function (Blueprint $table): void {
             $table->unique('user_id');
         });
 
@@ -19,15 +19,15 @@ return new class extends Migration
             $table->unique('nama_kelas');
         });
 
-        Schema::table('tahun_ajarans', function (Blueprint $table): void {
+        Schema::table('tahun_ajaran', function (Blueprint $table): void {
             $table->unique(['nama', 'semester']);
         });
 
-        Schema::table('jadwal_mengajars', function (Blueprint $table): void {
+        Schema::table('jadwal_mengajar', function (Blueprint $table): void {
             $table->unique(['guru_id', 'mapel_id', 'kelas_id', 'tahun_ajaran_id'], 'jadwal_mengajar_unique_assignment');
         });
 
-        Schema::table('nilais', function (Blueprint $table): void {
+        Schema::table('nilai', function (Blueprint $table): void {
             $table->unique(['siswa_id', 'jadwal_mengajar_id'], 'nilai_unique_siswa_jadwal');
         });
     }
@@ -37,15 +37,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('nilais', function (Blueprint $table): void {
+        Schema::table('nilai', function (Blueprint $table): void {
             $table->dropUnique('nilai_unique_siswa_jadwal');
         });
 
-        Schema::table('jadwal_mengajars', function (Blueprint $table): void {
+        Schema::table('jadwal_mengajar', function (Blueprint $table): void {
             $table->dropUnique('jadwal_mengajar_unique_assignment');
         });
 
-        Schema::table('tahun_ajarans', function (Blueprint $table): void {
+        Schema::table('tahun_ajaran', function (Blueprint $table): void {
             $table->dropUnique(['nama', 'semester']);
         });
 
@@ -53,7 +53,7 @@ return new class extends Migration
             $table->dropUnique(['nama_kelas']);
         });
 
-        Schema::table('gurus', function (Blueprint $table): void {
+        Schema::table('guru', function (Blueprint $table): void {
             $table->dropUnique(['user_id']);
         });
     }

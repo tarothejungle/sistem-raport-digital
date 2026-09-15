@@ -28,6 +28,8 @@ class GuruResource extends Resource
 
     protected static ?string $model = Guru::class;
 
+    protected static ?string $slug = 'guru';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Master Data';

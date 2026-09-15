@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('pengaturan_madrasahs', function (Blueprint $table): void {
+        Schema::create('pengaturan_madrasah', function (Blueprint $table): void {
             $table->id();
             $table->string('nama_madrasah')->default('Sistem Raport Digital');
             $table->string('logo_path')->nullable();
@@ -22,6 +22,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('pengaturan_madrasahs');
+        Schema::dropIfExists('pengaturan_madrasah');
     }
 };

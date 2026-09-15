@@ -12,11 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('gurus', function (Blueprint $table): void {
+        Schema::table('guru', function (Blueprint $table): void {
             $table->string('nik', 16)->nullable()->unique()->after('user_id');
         });
 
-        DB::table('gurus')
+        DB::table('guru')
             ->select(['id', 'nip'])
             ->orderBy('id')
             ->cursor()
@@ -24,26 +24,26 @@ return new class extends Migration
                 $legacyNip = preg_replace('/\D+/', '', (string) $guru->nip) ?? '';
 
                 if (preg_match('/^\d{16}$/', $legacyNip)) {
-                    DB::table('gurus')
+                    DB::table('guru')
                         ->where('id', $guru->id)
                         ->update(['nik' => $legacyNip]);
                 }
             });
 
-        Schema::table('gurus', function (Blueprint $table): void {
+        Schema::table('guru', function (Blueprint $table): void {
             $table->dropUnique(['nip']);
             $table->dropColumn('nip');
         });
 
-        DB::table('gurus')->update(['can_input_nilai' => false]);
+        DB::table('guru')->update(['can_input_nilai' => false]);
 
-        DB::table('jadwal_mengajars')
+        DB::table('jadwal_mengajar')
             ->select('guru_id')
             ->distinct()
             ->orderBy('guru_id')
             ->cursor()
             ->each(static function (object $jadwal): void {
-                DB::table('gurus')
+                DB::table('guru')
                     ->where('id', $jadwal->guru_id)
                     ->update(['can_input_nilai' => true]);
             });
@@ -54,21 +54,21 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('gurus', function (Blueprint $table): void {
+        Schema::table('guru', function (Blueprint $table): void {
             $table->string('nip', 30)->nullable()->unique()->after('user_id');
         });
 
-        DB::table('gurus')
+        DB::table('guru')
             ->select(['id', 'nik'])
             ->orderBy('id')
             ->cursor()
             ->each(static function (object $guru): void {
-                DB::table('gurus')
+                DB::table('guru')
                     ->where('id', $guru->id)
                     ->update(['nip' => $guru->nik]);
             });
 
-        Schema::table('gurus', function (Blueprint $table): void {
+        Schema::table('guru', function (Blueprint $table): void {
             $table->dropUnique(['nik']);
             $table->dropColumn('nik');
         });

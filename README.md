@@ -1,67 +1,70 @@
 # Sistem Rapor Digital
 
-Sistem Rapor Digital merupakan aplikasi pengelolaan data akademik sekolah berbasis Laravel 13 dan Filament 5. Aplikasi menyediakan panel terpadu untuk administrator, guru, dan siswa, mulai dari pengelolaan master data hingga input nilai, kenaikan kelas, dan penerbitan rapor PDF.
+Sistem Rapor Digital adalah aplikasi pengelolaan data akademik untuk madrasah dan sekolah. Aplikasi ini dibangun dengan Laravel 13 dan Filament 5, dengan tujuan sederhana: mengurus data siswa, penugasan guru, input nilai, kenaikan kelas, sampai penerbitan rapor PDF dari satu panel yang rapi.
+
+Proyek ini dirancang untuk dipakai oleh tim sekolah dengan kemampuan teknis yang beragam. Administrator dapat mengelola data master, guru cukup fokus pada kelas dan mata pelajaran yang diampu, sedangkan siswa dapat melihat nilai ketika aksesnya dibuka.
 
 ## Fitur Utama
 
-- Autentikasi menggunakan **username** dan kata sandi.
-- Role `admin`, `guru`, dan `siswa` dengan pembatasan akses panel.
-- Perlindungan login dengan rate limiting, regenerasi session, dan Cloudflare Turnstile.
-- Dashboard operasional sesuai konteks pengguna.
-- Pengelolaan tahun ajaran, kelas, mata pelajaran, guru, siswa, dan alumni.
-- Penugasan guru pada mata pelajaran dan kelas setiap tahun ajaran.
-- Input nilai per mata pelajaran dengan validasi data dan penyimpanan batch.
-- Perhitungan nilai akhir dan deskripsi ketercapaian belajar.
-- Pengaturan akses siswa untuk melihat nilai.
-- Kenaikan kelas dan kelulusan dengan riwayat kelas siswa.
-- Impor data siswa dari berkas spreadsheet.
-- Pratinjau, unduh, dan unduh massal rapor dalam format PDF.
-- Profil pengguna, avatar, dan penggantian kata sandi.
-- Database notification dan halaman maintenance.
-- Tampilan responsif dengan light mode dan dark mode.
+- **Data akademik terpusat**: tahun ajaran, kelas, mata pelajaran, guru, siswa, alumni, dan pengaturan identitas madrasah.
+- **Penugasan pengajar**: guru dapat ditugaskan pada kombinasi mata pelajaran dan kelas untuk tahun ajaran tertentu.
+- **Input nilai yang terstruktur**: nilai per mata pelajaran, perhitungan nilai akhir, indeks ketercapaian, dan deskripsi belajar.
+- **Pengelolaan siswa**: penambahan manual, impor spreadsheet, pengaturan alumni, serta riwayat perpindahan kelas.
+- **Kenaikan kelas dan kelulusan**: proses akhir periode disertai riwayat kelas agar data historis tetap jelas.
+- **Penerbitan rapor**: pratinjau, unduh satu rapor, dan unduh massal dalam format PDF.
+- **Kontrol akses nilai siswa**: administrator dapat mengatur kapan nilai boleh dilihat.
+- **Autentikasi dan profil**: login username, reset kata sandi, avatar, ganti kata sandi, role-based access, dan Cloudflare Turnstile.
+- **Antarmuka modern**: panel Filament responsif dengan dukungan light mode dan dark mode, termasuk halaman login bertema gamified.
+- **Operasional harian**: dashboard ringkasan, database notification, dan halaman maintenance.
 
 ## Teknologi
 
-- PHP 8.3+
-- Laravel 13 (`laravel/framework ^13.8`)
-- Filament 5 (`filament/filament ~5.0`)
-- Livewire 4 (`livewire/livewire ~4.0`)
+- PHP 8.3 atau lebih baru
+- Laravel 13
+- Filament 5 dan Livewire 4
 - MySQL 8+ atau SQLite
-- Tailwind CSS 4 (`@tailwindcss/vite ^4.0.0`) dan Vite 8
-- Dompdf (`barryvdh/laravel-dompdf ^3.1`)
-- Cloudflare Turnstile (`muazzambuilds/filament-turnstile 1.1.0`, paket lokal `packages/filament-turnstile`)
-- SweetAlert2 (`sweetalert2 ^11.26`)
-- PHPUnit 12
-- Pint, Pail, PAO (dev tooling)
+- Tailwind CSS 4, Vite 8, dan Dompdf
+- Cloudflare Turnstile melalui paket lokal `packages/filament-turnstile`
+- PHPUnit 12, Pint, Pail, dan PAO untuk pengembangan
 
 ## Prasyarat
 
-- PHP 8.3 atau lebih baru.
-- Composer 2.
-- Node.js 20+ dan npm.
-- MySQL 8+ atau SQLite.
-- Ekstensi PHP yang dibutuhkan Laravel, termasuk `pdo_mysql` atau `pdo_sqlite`, `mbstring`, `openssl`, `xml`, dan `dom`.
-- Git.
+Pastikan perangkat sudah memiliki:
+
+- PHP 8.3+ dengan ekstensi umum Laravel (`pdo_mysql` atau `pdo_sqlite`, `mbstring`, `openssl`, `xml`, `dom`)
+- Composer 2
+- Node.js 20+ dan npm
+- MySQL 8+ atau SQLite
+- Git
 
 ## Instalasi
+
+Ambil kode proyek dan pasang dependensinya:
 
 ```bash
 git clone https://github.com/tarothejungle/sistem-raport-digital.git
 cd sistem-raport-digital
 composer install
-cp .env.example .env
-php artisan key:generate
 npm install
 ```
 
-Atur koneksi database pada `.env`. Konfigurasi SQLite:
+Salin konfigurasi lingkungan dan buat application key:
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Pada Windows, ganti perintah `cp` dengan `copy .env.example .env`.
+
+Untuk SQLite, buat berkas `database/database.sqlite` lalu isi `.env`:
 
 ```env
 DB_CONNECTION=sqlite
-DB_DATABASE=/absolute/path/ke/project/database/database.sqlite
+DB_DATABASE=/absolute/path/ke/database.sqlite
 ```
 
-Konfigurasi MySQL:
+Untuk MySQL:
 
 ```env
 DB_CONNECTION=mysql
@@ -72,7 +75,7 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Jalankan migrasi, buat akun demo, dan bangun aset:
+Jalankan migrasi, bangun aset, lalu hidupkan server pengembangan:
 
 ```bash
 php artisan migrate --seed
@@ -80,35 +83,27 @@ npm run build
 php artisan serve
 ```
 
-Buka `http://127.0.0.1:8000/admin/login`.
+Aplikasi dapat diakses di `http://127.0.0.1:8000/admin/login`.
 
-## Akun Demo & Super Admin
-
-`DatabaseSeeder` membuat akun administrator demo berikut secara idempotent:
-
-| Username | Kata sandi | Role |
-| --- | --- | --- |
-| `demo.admin` | `DemoRaport2026` | `admin` |
-
-Kredensial ini hanya untuk lingkungan local, demo, dan pengujian. Ubah kata sandi atau hapus akun demo sebelum aplikasi digunakan pada lingkungan production.
-
-Login sekarang menggunakan **username**, bukan alamat email. Seeder dapat dijalankan kembali tanpa membuat akun demo ganda:
+Jika ingin setup lebih cepat setelah dependensi terpasang, gunakan:
 
 ```bash
-php artisan db:seed
+composer run setup
 ```
 
-Alternatif production — buat super admin interaktif tanpa seeder:
+## Membuat Super Admin
+
+Seeder tidak membuat akun administrator bawaan. Setelah instalasi, buat akun super admin secara interaktif:
 
 ```bash
 php artisan admin:create-super
 ```
 
-Perintah akan meminta `Nama lengkap`, `Username` (huruf kecil `a-z0-9._-`, unik), `Email` (unik), `Kata sandi` (min. 8 karakter, konfirmasi), lalu membuat `role = admin` dengan `email_verified_at` terisi.
+Perintah ini akan meminta nama lengkap, username, email, dan kata sandi. Akun yang dibuat otomatis mendapat role `admin` dan email yang sudah terverifikasi.
 
 ## Cloudflare Turnstile
 
-Isi key pada `.env`:
+Isi kredensial Turnstile pada `.env`:
 
 ```env
 TURNSTILE_SITE_KEY=
@@ -118,84 +113,76 @@ TURNSTILE_SIZE=flexible
 TURNSTILE_LANGUAGE=id
 ```
 
-Gunakan key Cloudflare asli pada production. Banner merah Turnstile merupakan perilaku normal ketika test key digunakan pada lingkungan local.
-
-## Alur Penggunaan
-
-1. Login menggunakan username dan kata sandi.
-2. Atur profil madrasah dan tahun ajaran aktif.
-3. Buat kelas dan mata pelajaran.
-4. Tambahkan guru dan siswa.
-5. Tetapkan pengajar untuk kelas dan mata pelajaran.
-6. Input nilai siswa berdasarkan penugasan pengajar.
-7. Atur akses siswa untuk melihat nilai.
-8. Proses kenaikan kelas atau kelulusan pada akhir periode.
-9. Pratinjau dan unduh rapor siswa.
+Gunakan key asli untuk production. Key uji coba biasanya menampilkan banner peringatan di halaman login, hal ini normal pada lingkungan lokal.
 
 ## Perintah Pengembangan
 
-Menjalankan server, queue worker, log viewer, dan Vite secara bersamaan:
+Menjalankan server, queue worker, log viewer, dan Vite sekaligus:
 
 ```bash
 composer run dev
 ```
 
-Setup satu perintah (install + env + migrate/seed + build):
+Perintah lain yang sering dipakai:
 
 ```bash
-composer run setup
+npm run dev      # mode pengembangan Vite
+npm run build    # build aset production
+php artisan test # menjalankan seluruh test
 ```
 
-Membangun aset production:
+Setelah mengubah theme atau aset Filament, publikasikan ulang asetnya:
 
 ```bash
-npm run build
-```
-
-Mode dev Vite:
-
-```bash
-npm run dev
-```
-
-Mempublikasikan ulang aset Filament setelah theme berubah:
-
-```bash
+php artisan optimize:clear
 php artisan filament:assets
 ```
 
-Proxy untuk deployment di balik reverse proxy / load balancer:
+## Catatan Deployment
 
-`bootstrap/app.php` sudah mengaktifkan `trustProxies(at: '*')`.
+Untuk production, pasang dependency dari lockfile dan bangun ulang aset:
 
-## Tampilan Login
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan optimize:clear
+php artisan filament:assets
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
 
-Halaman login (`/admin/login`) memakai desain dua panel Road to Knowledge: panel ilustrasi `public/logo/undraw_educato_*.svg` dan panel form navy dengan theme switcher di sudut kanan atas, heading `Sign In`, serta form Filament (username, kata sandi, ingat saya, Turnstile, tombol `Login ke Sistem`). Token warna login terpusat di `resources/css/filament/admin/raport-theme.css` dan sinkron ke `public/css/app/raport-theme.css` via `AdminPanelProvider` (`filemtime` versioning), dark mode mengikuti token yang sama.
+Jika aplikasi berada di belakang reverse proxy atau Cloudflare Tunnel, isi `TRUSTED_PROXIES` dengan IP/CIDR proxy yang dipercaya. Nilai `*` hanya cocok jika origin tidak dapat diakses langsung dari internet. Biarkan `ASSET_URL` kosong kecuali aset statis memang dilayani dari CDN terpisah.
 
-## Struktur Proyek (ringkas)
+## Struktur Penting
 
-- `app/Filament/Admin/Pages/Auth/Login.php` — halaman login kustom
-- `app/Console/Commands/CreateSuperAdmin.php` — `admin:create-super`
-- `resources/views/filament/admin/pages/auth/login.blade.php` — shell login dua panel
-- `resources/css/filament/admin/raport-theme.css` — sumber theme
-- `public/css/app/raport-theme.css` — hasil sinkron theme (jangan edit manual)
-- `public/logo/` — aset ilustrasi & logo login
-- `logo/` — varian logo sumber (tidak ikut build)
+- `app/Filament/Admin` — resource, halaman, widget, dan autentikasi panel admin
+- `app/Models` — model Eloquent untuk data akademik dan pengguna
+- `app/Services` — logika impor siswa, sinkronisasi guru, dan proses kelas
+- `app/Http/Controllers/RaportPdfController.php` — pratinjau dan unduh rapor PDF
+- `database/migrations` — skema database beserta perubahannya
+- `resources/views/filament` — tampilan kustom Filament
+- `resources/css/filament/admin/raport-theme.css` — sumber theme panel
+- `template-import-siswa.xlsx` — template resmi untuk impor data siswa
+- `tests` — test fitur untuk layanan, keamanan, dashboard, dan rapor
 
 ## Pengujian
 
+Jalankan test suite sebelum mengirim perubahan:
+
 ```bash
 php artisan test
-# atau
-composer run test
 ```
 
-Test suite menggunakan SQLite `:memory:` terisolasi (`phpunit.xml`) dan mencakup layanan kelas, siswa, kenaikan kelas, command `admin:create-super` (`tests/Feature/Console/CreateSuperAdminCommandTest.php`), serta aturan penting data akademik.
+Suite ini menggunakan SQLite `:memory:` sehingga tidak menyentuh database pengembangan. Cakupannya meliputi layanan kelas dan siswa, input nilai, kenaikan kelas, command super admin, dashboard, upload file, notifikasi, keamanan production, hingga unduh rapor.
 
-## Keamanan dan Data Sensitif
+## Keamanan Data
 
-Repository tidak menyertakan `.env`, database lokal, dump SQL, private key, upload pengguna, `vendor`, atau `node_modules`. Jangan commit kredensial production, Turnstile secret key, database sekolah, berkas rapor, maupun data pribadi guru dan siswa. File `.env.example` adalah template — jangan isi key production di sana sebelum push.
+Repository ini sengaja tidak menyertakan `.env`, database lokal, dump SQL, kredensial, upload pengguna, `vendor`, atau `node_modules`. Jangan menyimpan data pribadi guru dan siswa di Git. Gunakan `.env.example` hanya sebagai template konfigurasi, lalu simpan nilai sensitif di server masing-masing.
+
+Berkas spreadsheet lain selain template resmi diabaikan oleh Git untuk mengurangi risiko kebocoran data sekolah.
 
 ## Lisensi
 
-Sistem Rapor Digital didistribusikan di bawah [GNU General Public License v3.0 atau versi lebih baru](LICENSE). Dependensi dan aset pihak ketiga tetap tunduk pada lisensi masing-masing.
+Proyek ini dirilis di bawah [GNU General Public License v3.0 atau versi lebih baru](LICENSE). Dependensi dan aset pihak ketiga tetap mengikuti lisensi masing-masing.

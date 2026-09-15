@@ -12,27 +12,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('mata_pelajarans', function (Blueprint $table): void {
+        Schema::table('mata_pelajaran', function (Blueprint $table): void {
             $table->enum('kelompok', ['A', 'B'])->default('A')->after('nama_mapel');
             $table->integer('kkm')->default(70)->change();
         });
 
-        Schema::table('nilais', function (Blueprint $table): void {
+        Schema::table('nilai', function (Blueprint $table): void {
             $table->unsignedTinyInteger('kkm')->nullable()->after('jadwal_mengajar_id');
             $table->unsignedTinyInteger('nilai_angka')->nullable()->after('kkm');
             $table->char('predikat', 1)->nullable()->after('nilai_angka');
             $table->text('deskripsi')->nullable()->after('predikat');
         });
 
-        DB::table('nilais')
-            ->join('jadwal_mengajars', 'jadwal_mengajars.id', '=', 'nilais.jadwal_mengajar_id')
-            ->join('mata_pelajarans', 'mata_pelajarans.id', '=', 'jadwal_mengajars.mapel_id')
+        DB::table('nilai')
+            ->join('jadwal_mengajar', 'jadwal_mengajar.id', '=', 'nilai.jadwal_mengajar_id')
+            ->join('mata_pelajaran', 'mata_pelajaran.id', '=', 'jadwal_mengajar.mapel_id')
             ->select([
-                'nilais.id',
-                'nilais.nilai_akhir',
-                'mata_pelajarans.kkm as mapel_kkm',
+                'nilai.id',
+                'nilai.nilai_akhir',
+                'mata_pelajaran.kkm as mapel_kkm',
             ])
-            ->orderBy('nilais.id')
+            ->orderBy('nilai.id')
             ->cursor()
             ->each(function (object $nilai): void {
                 $kkm = (int) ($nilai->mapel_kkm ?? 70);
@@ -47,7 +47,7 @@ return new class extends Migration
                         default => 'D',
                     };
 
-                DB::table('nilais')
+                DB::table('nilai')
                     ->where('id', $nilai->id)
                     ->update([
                         'kkm' => $kkm,
@@ -62,11 +62,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('nilais', function (Blueprint $table): void {
+        Schema::table('nilai', function (Blueprint $table): void {
             $table->dropColumn(['kkm', 'nilai_angka', 'predikat', 'deskripsi']);
         });
 
-        Schema::table('mata_pelajarans', function (Blueprint $table): void {
+        Schema::table('mata_pelajaran', function (Blueprint $table): void {
             $table->dropColumn('kelompok');
             $table->integer('kkm')->default(75)->change();
         });

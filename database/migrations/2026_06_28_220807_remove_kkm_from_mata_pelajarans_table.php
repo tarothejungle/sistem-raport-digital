@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('mata_pelajarans', function (Blueprint $table): void {
+        Schema::table('mata_pelajaran', function (Blueprint $table): void {
             $table->dropColumn('kkm');
         });
     }
 
     public function down(): void
     {
-        Schema::table('mata_pelajarans', function (Blueprint $table): void {
+        Schema::table('mata_pelajaran', function (Blueprint $table): void {
             $table->unsignedTinyInteger('kkm')
                 ->default(70)
                 ->after('kelompok');

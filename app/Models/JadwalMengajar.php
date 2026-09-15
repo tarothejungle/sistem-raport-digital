@@ -9,6 +9,8 @@ use Illuminate\Support\Str;
 
 class JadwalMengajar extends Model
 {
+    protected $table = 'jadwal_mengajar';
+
     /**
      * @var array<int, string>
      */

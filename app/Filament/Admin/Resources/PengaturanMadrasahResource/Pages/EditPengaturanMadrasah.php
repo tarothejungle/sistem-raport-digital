@@ -9,6 +9,11 @@ class EditPengaturanMadrasah extends EditRecord
 {
     protected static string $resource = PengaturanMadrasahResource::class;
 
+    protected function getRedirectUrl(): ?string
+    {
+        return null;
+    }
+
     protected function getSavedNotificationTitle(): ?string
     {
         return 'Pengaturan madrasah berhasil diperbarui.';

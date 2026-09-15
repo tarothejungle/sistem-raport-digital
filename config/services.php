@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'absensi' => [
+        'url' => env('ABSENSI_API_URL'),
+        'api_key' => env('ABSENSI_API_KEY'),
+        'connect_timeout' => (int) env('ABSENSI_API_CONNECT_TIMEOUT', 5),
+        'timeout' => (int) env('ABSENSI_API_TIMEOUT', 30),
+    ],
+
 ];

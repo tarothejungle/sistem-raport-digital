@@ -5,11 +5,12 @@ namespace App\Providers\Filament;
 use App\Filament\Admin\Pages\Auth\ChangePassword;
 use App\Filament\Admin\Pages\Auth\EditProfile;
 use App\Filament\Admin\Pages\Auth\Login;
+use App\Filament\Admin\Pages\Auth\PasswordReset\RequestPasswordReset;
 use App\Filament\Admin\Pages\Dashboard;
-use App\Filament\Admin\Widgets\DeleteAvatarModal;
 use App\Filament\Admin\Widgets\RaportCommandCenter;
 use App\Filament\Admin\Widgets\RaportOverview;
 use Filament\Enums\ThemeMode;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -21,7 +22,9 @@ use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
+use Filament\Support\Facades\FilamentIcon;
 use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsIconAlias;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -29,8 +32,8 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Livewire\Livewire;
 use MuazzamBuilds\FilamentTurnstile\TurnstilePlugin;
 use Zvizvi\FilamentNotificationsTabs\FilamentNotificationsTabsPlugin;
 
@@ -44,30 +47,41 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->darkMode(true)
             ->defaultThemeMode(ThemeMode::Light)
-            ->spa()
-            ->spaUrlExceptions([
-                '*/admin/cetak-rapor/*/pratinjau',
-                '*/admin/cetak-rapor/*/unduh',
-            ])
             ->login(Login::class)
-            ->passwordReset()
+            ->passwordReset(RequestPasswordReset::class)
             ->authPasswordBroker('users')
             ->profile(EditProfile::class, isSimple: false)
             ->userMenuItems([
                 'profile' => fn ($action) => $action
                     ->label('Ubah Profil')
                     ->icon('heroicon-o-user-circle')
-                    ->sort(100),
+                    ->sort(10),
 
                 'change-password' => MenuItem::make()
                     ->label('Ganti Kata Sandi')
                     ->icon('heroicon-o-key')
-                    ->url(fn (): string => ChangePassword::getUrl()),
+                    ->url(fn (): string => ChangePassword::getUrl())
+                    ->sort(20),
 
                 'logout' => fn ($action) => $action
                     ->label('Keluar')
                     ->icon('heroicon-o-arrow-left-on-rectangle')
                     ->color('danger')
+                    ->url(null)
+                    ->postToUrl(false)
+                    ->requiresConfirmation()
+                    ->modalHeading('Keluar dari akun?')
+                    ->modalDescription('Sesi Anda akan diakhiri dan Anda harus masuk kembali untuk mengakses sistem.')
+                    ->modalSubmitActionLabel('Ya, keluar')
+                    ->modalCancelActionLabel('Batal')
+                    ->action(function () {
+                        Filament::auth()->logout();
+
+                        session()->invalidate();
+                        session()->regenerateToken();
+
+                        return redirect()->to(Filament::getLoginUrl() ?? Filament::getUrl());
+                    })
                     ->sort(100),
             ])
             ->databaseNotifications()
@@ -81,17 +95,19 @@ class AdminPanelProvider extends PanelProvider
                     ->size('flexible')
                     ->language('id'),
             ])
-            ->brandName('')
-            ->favicon(asset('favicon.ico'))
+            ->brandName('Sistem Rapor Digital')
+            ->brandLogo(fn (): View => view('components.filament-logo'))
+            ->brandLogoHeight('2.25rem')
+            ->favicon(asset('logo/logo-rapor.png'))
             ->homeUrl(fn (): string => '/admin')
-            ->sidebarCollapsibleOnDesktop()
+            ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarWidth('18rem')
             ->maxContentWidth(Width::SevenExtraLarge)
             ->navigationGroups([
-                'Akademik',
-                'Master Data',
-                'Portal Siswa',
                 'Pengaturan',
+                'Master Data',
+                'Akademik',
+                'Portal Siswa',
             ])
             ->colors([
                 'primary' => Color::generateV3Palette('#1769ff'),
@@ -102,11 +118,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->assets([
                 Css::make(
-                    'sweetalert2',
-                    base_path('node_modules/sweetalert2/dist/sweetalert2.min.css'),
-                ),
-
-                Css::make(
                     'raport-theme',
                     resource_path('css/filament/admin/raport-theme.css'),
                 )->html(static fn (): string => asset('css/app/raport-theme.css').'?v='.filemtime(
@@ -114,13 +125,8 @@ class AdminPanelProvider extends PanelProvider
                 )),
 
                 Js::make(
-                    'sweetalert2',
-                    base_path('node_modules/sweetalert2/dist/sweetalert2.all.min.js'),
-                ),
-
-                Js::make(
-                    'raport-alerts',
-                    resource_path('js/filament/admin/raport-alerts.js'),
+                    'gamified-login',
+                    resource_path('js/gamified-login.js'),
                 ),
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
@@ -151,21 +157,20 @@ class AdminPanelProvider extends PanelProvider
 
     public function boot(): void
     {
-        Livewire::component('delete-avatar-modal', DeleteAvatarModal::class);
+        $sidebarToggleIcon = new HtmlString(<<<'SVG'
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                <path d="M8.5 4v16" />
+            </svg>
+            SVG);
 
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::TOPBAR_LOGO_AFTER,
-            static fn (): View => view(
-                'filament.admin.components.topbar-brand',
-            ),
-        );
-
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::SIDEBAR_LOGO_AFTER,
-            static fn (): View => view(
-                'filament.admin.components.mobile-sidebar-brand',
-            ),
-        );
+        FilamentIcon::register([
+            PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON => $sidebarToggleIcon,
+            PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON_RTL => $sidebarToggleIcon,
+            PanelsIconAlias::SIDEBAR_EXPAND_BUTTON => $sidebarToggleIcon,
+            PanelsIconAlias::SIDEBAR_EXPAND_BUTTON_RTL => $sidebarToggleIcon,
+            PanelsIconAlias::TOPBAR_OPEN_SIDEBAR_BUTTON => $sidebarToggleIcon,
+        ]);
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::GLOBAL_SEARCH_AFTER,

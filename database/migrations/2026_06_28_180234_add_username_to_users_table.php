@@ -9,29 +9,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table): void {
+        Schema::table('user', function (Blueprint $table): void {
             $table->string('username', 50)
                 ->nullable()
                 ->after('name');
         });
 
-        DB::table('users')
+        DB::table('user')
             ->orderBy('id')
             ->get()
             ->each(function (object $user): void {
                 $candidate = match ($user->role) {
-                    'guru' => DB::table('gurus')
+                    'guru' => DB::table('guru')
                         ->where('user_id', $user->id)
                         ->value('nik'),
 
-                    'siswa' => DB::table('siswas')
+                    'siswa' => DB::table('siswa')
                         ->where('user_id', $user->id)
                         ->value('nisn'),
 
                     default => explode('@', (string) $user->email)[0] ?? '',
                 };
 
-                DB::table('users')
+                DB::table('user')
                     ->where('id', $user->id)
                     ->update([
                         'username' => $this->makeUniqueUsername(
@@ -41,7 +41,7 @@ return new class extends Migration
                     ]);
             });
 
-        Schema::table('users', function (Blueprint $table): void {
+        Schema::table('user', function (Blueprint $table): void {
             $table->string('username', 50)
                 ->nullable(false)
                 ->change();
@@ -52,7 +52,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table): void {
+        Schema::table('user', function (Blueprint $table): void {
             $table->dropUnique(['username']);
             $table->dropColumn('username');
         });
@@ -81,7 +81,7 @@ return new class extends Migration
         $counter = 2;
 
         while (
-            DB::table('users')
+            DB::table('user')
                 ->where('username', $username)
                 ->exists()
         ) {

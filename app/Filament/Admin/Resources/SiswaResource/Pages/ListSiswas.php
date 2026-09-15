@@ -81,7 +81,7 @@ class ListSiswas extends ListRecords
                         ->persistent()
                         ->title('Import siswa selesai')
                         ->body(sprintf(
-                            '%d data baru ditambahkan dan %d data diperbarui. Akun siswa baru memakai kata sandi awal berupa NISN.',
+                            '%d data baru ditambahkan dan %d data diperbarui. Atur email aktif dan kata sandi sebelum memberi akses portal kepada siswa baru.',
                             $summary['created'],
                             $summary['updated'],
                         ))

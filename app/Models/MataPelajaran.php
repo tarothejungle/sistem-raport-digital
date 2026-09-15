@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MataPelajaran extends Model
 {
+    protected $table = 'mata_pelajaran';
+
     /**
      * @var array<int, string>
      */

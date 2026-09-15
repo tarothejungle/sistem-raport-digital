@@ -8,21 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('kkm_pengajars', function (Blueprint $table): void {
+        Schema::create('kkm_pengajar', function (Blueprint $table): void {
             $table->id();
 
             $table->foreignId('guru_id')
-                ->constrained()
+                ->constrained('guru')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
             $table->foreignId('mapel_id')
-                ->constrained('mata_pelajarans')
+                ->constrained('mata_pelajaran')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
             $table->foreignId('tahun_ajaran_id')
-                ->constrained('tahun_ajarans')
+                ->constrained('tahun_ajaran')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
@@ -39,6 +39,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('kkm_pengajars');
+        Schema::dropIfExists('kkm_pengajar');
     }
 };

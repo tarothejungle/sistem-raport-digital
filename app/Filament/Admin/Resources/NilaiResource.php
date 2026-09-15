@@ -33,6 +33,8 @@ class NilaiResource extends Resource
 {
     protected static ?string $model = Nilai::class;
 
+    protected static ?string $slug = 'nilai';
+
     protected static bool $shouldRegisterNavigation = false;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
