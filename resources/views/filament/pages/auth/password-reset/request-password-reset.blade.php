@@ -24,8 +24,8 @@
 
             <header class="srd-game-card__header">
                 <a href="{{ filament()->getLoginUrl() }}" class="srd-game-card__badge" aria-label="Kembali ke halaman login">
-                    <img src="{{ asset('logo/logo-rapor-dark.png') }}" alt="" class="srd-theme-logo srd-theme-logo--light">
-                    <img src="{{ asset('logo/logo-rapor-light.png') }}" alt="" class="srd-theme-logo srd-theme-logo--dark">
+                    <img src="/logo/logo-baru-dark.png" alt="" class="srd-theme-logo srd-theme-logo--light">
+                    <img src="/logo/logo-baru-light.png" alt="" class="srd-theme-logo srd-theme-logo--dark">
                 </a>
 
                 <h1 id="reset-heading">Reset Kata Sandi</h1>

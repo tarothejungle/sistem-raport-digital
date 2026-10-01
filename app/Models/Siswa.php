@@ -20,8 +20,10 @@ class Siswa extends Model
      */
     protected $fillable = [
         'user_id',
+        'emis_id',
         'nisn',
         'nama_lengkap',
+        'jenis_kelamin',
         'kelas_id',
         'can_view_nilai',
         'status',
@@ -74,6 +76,11 @@ class Siswa extends Model
     public function catatanRapors(): HasMany
     {
         return $this->hasMany(CatatanRapor::class);
+    }
+
+    public function absensiSiswas(): HasMany
+    {
+        return $this->hasMany(AbsensiSiswa::class);
     }
 
     public function riwayatKelasSiswas(): HasMany

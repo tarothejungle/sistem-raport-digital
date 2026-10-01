@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\AksesNilaiSiswaResource\Pages\ListAksesNilaiSiswas;
 use App\Models\Siswa;
+use App\Models\TahunAjaran;
 use App\Services\StudentAccessService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -27,7 +28,7 @@ class AksesNilaiSiswaResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 6;
 
     protected static ?string $navigationLabel = 'Akses Nilai Siswa';
 
@@ -77,7 +78,11 @@ class AksesNilaiSiswaResource extends Resource
         if ($user?->isGuru() && $guruId !== null) {
             return $query->whereHas(
                 'kelas.jadwalMengajars',
-                static fn (Builder $jadwalQuery): Builder => $jadwalQuery->where('guru_id', $guruId),
+                static fn (Builder $jadwalQuery): Builder => $jadwalQuery
+                    ->where('guru_id', $guruId)
+                    ->whereIn('tahun_ajaran_id', TahunAjaran::query()
+                        ->select('id')
+                        ->where('is_active', true)),
             );
         }
 
@@ -87,6 +92,7 @@ class AksesNilaiSiswaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->defaultSort('nama_lengkap')
             ->columns([
                 TextColumn::make('nisn')

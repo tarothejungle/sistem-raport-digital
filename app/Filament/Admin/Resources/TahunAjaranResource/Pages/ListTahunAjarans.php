@@ -20,7 +20,8 @@ class ListTahunAjarans extends ListRecords
         return [
             CreateAction::make()
                 ->label('Set Tahun Ajaran')
-                ->icon('heroicon-o-plus-circle'),
+                ->icon('heroicon-o-plus-circle')
+                ->extraAttributes(['class' => 'raport-desktop-only-action']),
         ];
     }
 }

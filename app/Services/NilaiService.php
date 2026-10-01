@@ -171,6 +171,9 @@ final class NilaiService
             && $guru !== null
             && $guru->can_input_nilai
             && (int) $jadwalMengajar->guru_id === (int) $guru->getKey()
+            && $jadwalMengajar->tahunAjaran()
+                ->where('is_active', true)
+                ->exists()
         ) {
             return;
         }

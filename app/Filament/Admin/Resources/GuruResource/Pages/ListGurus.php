@@ -23,8 +23,12 @@ class ListGurus extends ListRecords
     {
         return [
             Action::make('tarikDataAbsensi')
-                ->label('Tarik Data dari Absensi')
+                ->label('Sync Guru')
                 ->icon('heroicon-o-arrow-down-tray')
+                ->requiresConfirmation()
+                ->modalHeading('Sync data guru dari Absensi?')
+                ->modalDescription('Data guru baru akan ditambahkan dan data guru lama akan diperbarui dari sistem Absensi.')
+                ->extraAttributes(['class' => 'raport-desktop-only-action'])
                 ->action(function (): void {
                     try {
                         $result = app(AbsensiGuruSyncService::class)->sync();
@@ -35,9 +39,11 @@ class ListGurus extends ListRecords
                             ->success()
                             ->send();
                     } catch (Throwable $exception) {
+                        report($exception);
+
                         Notification::make()
                             ->title('Data Gagal Ditarik')
-                            ->body($exception->getMessage())
+                            ->body('Sinkronisasi gagal. Periksa konfigurasi atau log aplikasi lalu coba kembali.')
                             ->danger()
                             ->send();
                     }
@@ -45,7 +51,8 @@ class ListGurus extends ListRecords
 
             CreateAction::make()
                 ->label('Tambah Guru')
-                ->icon('heroicon-o-plus-circle'),
+                ->icon('heroicon-o-plus-circle')
+                ->extraAttributes(['class' => 'raport-desktop-only-action']),
         ];
     }
 }

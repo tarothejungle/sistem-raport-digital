@@ -21,7 +21,8 @@ class ListJadwalMengajars extends ListRecords
             CreateAction::make()
                 ->label('Atur Pengajar Kelas')
                 ->icon('heroicon-o-user-group')
-                ->color('primary'),
+                ->color('primary')
+                ->extraAttributes(['class' => 'raport-desktop-only-action']),
         ];
     }
 }

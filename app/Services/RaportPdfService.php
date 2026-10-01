@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\AbsensiSiswa;
 use App\Models\CatatanRapor;
 use App\Models\JadwalMengajar;
 use App\Models\PengaturanMadrasah;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class RaportPdfService
 {
@@ -68,6 +70,10 @@ class RaportPdfService
             ?? new PengaturanMadrasah([
                 'nama_madrasah' => 'Sistem Rapor Digital',
             ]);
+        $absensi = AbsensiSiswa::query()
+            ->where('siswa_id', $siswa->getKey())
+            ->where('tahun_ajaran_id', $tahunAjaran->getKey())
+            ->first();
 
         return [
             'siswa' => $siswa,
@@ -84,21 +90,26 @@ class RaportPdfService
                 ->where('siswa_id', $siswa->getKey())
                 ->where('tahun_ajaran_id', $tahunAjaran->getKey())
                 ->value('saran'),
-            'logoDataUri' => $this->imageDataUri($pengaturan->logo_path),
-            'ttdKepalaDataUri' => $this->imageDataUri($pengaturan->ttd_kepala_path),
+            'absensi' => [
+                'sakit' => $absensi?->sakit ?? 0,
+                'izin' => $absensi?->izin ?? 0,
+                'alpa' => $absensi?->alpa ?? 0,
+            ],
+            'logoDataUri' => $this->imageDataUri($pengaturan->logo_path, 'public'),
+            'ttdKepalaDataUri' => $this->imageDataUri($pengaturan->ttd_kepala_path, 'local'),
             'tanggalCetak' => now()
                 ->locale('id')
                 ->translatedFormat('d F Y'),
         ];
     }
 
-    private function imageDataUri(?string $path): ?string
+    private function imageDataUri(?string $path, string $disk): ?string
     {
         if (blank($path)) {
             return null;
         }
 
-        $filePath = storage_path('app/public/'.ltrim($path, '/'));
+        $filePath = Storage::disk($disk)->path($path);
 
         if (! is_file($filePath)) {
             return null;

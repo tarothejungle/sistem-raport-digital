@@ -79,6 +79,7 @@ class KelasResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->defaultSort('tingkat')
             ->columns([
                 TextColumn::make('nama_kelas')

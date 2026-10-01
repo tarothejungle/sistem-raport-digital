@@ -170,6 +170,11 @@ class RaportCommandCenter extends Widget implements HasActions, HasSchemas
             ],
             'guruDetails' => [
                 ['icon' => 'heroicon-o-user', 'label' => 'Username', 'value' => $user?->username ?? '-'],
+                ['icon' => 'heroicon-o-identification', 'label' => 'Jenis Kelamin', 'value' => match ($guru?->jenis_kelamin) {
+                    'L' => 'Laki-laki',
+                    'P' => 'Perempuan',
+                    default => '-',
+                }],
                 ['icon' => 'heroicon-o-calendar-days', 'label' => 'Tempat, Tanggal Lahir', 'value' => $this->birthPlaceDate($guru)],
                 ['icon' => 'heroicon-o-envelope', 'label' => 'Email', 'value' => $user?->email ?? '-'],
                 ['icon' => 'heroicon-o-device-phone-mobile', 'label' => 'No. Handphone', 'value' => $guru?->no_telp ?: '-'],

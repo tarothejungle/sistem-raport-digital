@@ -20,6 +20,7 @@ class SiswaServiceTest extends TestCase
         $siswa = app(SiswaService::class)->create([
             'nisn' => '100000010',
             'nama_lengkap' => 'Siswa Akun',
+            'jenis_kelamin' => 'L',
             'kelas_id' => $kelas->getKey(),
             'username' => 'Siswa.001',
             'email' => 'Siswa.001@example.test',
@@ -29,6 +30,7 @@ class SiswaServiceTest extends TestCase
         $siswa->load('user');
 
         $this->assertSame(Siswa::STATUS_AKTIF, $siswa->status);
+        $this->assertSame('L', $siswa->jenis_kelamin);
         $this->assertSame('siswa.001', $siswa->user?->username);
         $this->assertSame('siswa.001@example.test', $siswa->user?->email);
         $this->assertTrue(Hash::check('password-siswa', (string) $siswa->user?->password));

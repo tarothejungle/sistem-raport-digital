@@ -62,6 +62,11 @@ class TahunAjaran extends Model
         return $this->hasMany(CatatanRapor::class);
     }
 
+    public function absensiSiswas(): HasMany
+    {
+        return $this->hasMany(AbsensiSiswa::class);
+    }
+
     public function getLabelAttribute(): string
     {
         return sprintf('%s - %s', $this->nama, $this->semester);

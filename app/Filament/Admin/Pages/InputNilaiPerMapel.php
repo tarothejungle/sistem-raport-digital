@@ -9,7 +9,9 @@ use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use App\Services\KenaikanKelasService;
 use App\Services\NilaiBatchService;
+use App\Services\NilaiSpreadsheetService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -28,6 +30,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class InputNilaiPerMapel extends Page implements HasTable
 {
@@ -43,7 +47,7 @@ class InputNilaiPerMapel extends Page implements HasTable
 
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     public JadwalMengajar $jadwalMengajar;
 
@@ -143,6 +147,7 @@ class InputNilaiPerMapel extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->query(
                 app(KenaikanKelasService::class)
                     ->siswaUntukKelasTahunQuery(
@@ -155,10 +160,78 @@ class InputNilaiPerMapel extends Page implements HasTable
                                 'jadwal_mengajar_id',
                                 $this->jadwalMengajar->getKey(),
                             ),
+                        'catatanRapors' => fn (HasMany $query) => $query
+                            ->where('tahun_ajaran_id', $this->jadwalMengajar->tahun_ajaran_id),
                     ]),
             )
             ->defaultSort('nama_lengkap')
             ->headerActions([
+                Action::make('templateNilaiSiswa')
+                    ->label('Template Nilai Siswa')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('gray')
+                    ->url(route('admin.nilai.template', [
+                        'jadwalMengajar' => $this->jadwalMengajar,
+                    ]))
+                    ->extraAttributes(['class' => 'raport-desktop-only-action']),
+
+                Action::make('importNilaiSiswa')
+                    ->label('Import Nilai Siswa')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('success')
+                    ->modalHeading('Import Nilai Siswa')
+                    ->modalDescription('Gunakan template dari jadwal ini. Nilai, deskripsi, dan saran akan diperbarui berdasarkan NISN.')
+                    ->modalSubmitActionLabel('Mulai Import')
+                    ->schema([
+                        FileUpload::make('file')
+                            ->label('File Nilai Siswa')
+                            ->required()
+                            ->storeFiles(false)
+                            ->acceptedFileTypes([
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            ])
+                            ->maxSize(5120)
+                            ->helperText('Gunakan file .xlsx dari tombol Template Nilai Siswa. Ukuran maksimal 5 MB.'),
+                    ])
+                    ->action(function (array $data): void {
+                        try {
+                            $jumlahNilai = app(NilaiSpreadsheetService::class)
+                                ->importUploadedFile(
+                                    $this->jadwalMengajar,
+                                    $data['file'] ?? null,
+                                );
+                        } catch (ValidationException $exception) {
+                            Notification::make()
+                                ->danger()
+                                ->persistent()
+                                ->title('Import nilai gagal')
+                                ->body(collect($exception->errors())->flatten()->take(10)->implode(' '))
+                                ->send();
+
+                            return;
+                        } catch (Throwable $exception) {
+                            report($exception);
+
+                            Notification::make()
+                                ->danger()
+                                ->persistent()
+                                ->title('Import nilai gagal')
+                                ->body('File tidak dapat diproses. Pastikan file berasal dari Template Nilai Siswa pada jadwal ini.')
+                                ->send();
+
+                            return;
+                        }
+
+                        $this->resetTable();
+
+                        Notification::make()
+                            ->success()
+                            ->title('Import nilai selesai')
+                            ->body("{$jumlahNilai} nilai siswa berhasil diperbarui.")
+                            ->send();
+                    })
+                    ->extraAttributes(['class' => 'raport-desktop-only-action']),
+
                 Action::make('tambahNilai')
                     ->label('Tambah Nilai')
                     ->icon('heroicon-o-plus')
@@ -173,6 +246,7 @@ class InputNilaiPerMapel extends Page implements HasTable
                     ])
                     ->modalSubmitActionLabel('Simpan Nilai')
                     ->modalCancelActionLabel('Batal')
+                    ->extraAttributes(['class' => 'raport-desktop-only-action'])
                     ->fillForm(fn (): array => [
                         'kode_mapel' => $this->jadwalMengajar
                             ->mataPelajaran?->kode_mapel ?? '-',
@@ -214,25 +288,23 @@ class InputNilaiPerMapel extends Page implements HasTable
                         Section::make('Pengaturan Nilai')
                             ->schema([
                                 TextInput::make('kkm')
-                                    ->label('KKM')
+                                    ->label('KKTP')
                                     ->numeric()
                                     ->integer()
                                     ->minValue(0)
                                     ->maxValue(100)
                                     ->required()
                                     ->helperText(
-                                        'KKM ini berlaku untuk guru, mapel, dan tahun ajaran yang sama.'
+                                        'KKTP ini berlaku untuk guru, mapel, dan tahun ajaran yang sama.'
                                     ),
 
                                 Textarea::make('deskripsi')
                                     ->label('Deskripsi')
-                                    ->rows(4)
+                                    ->rows(3)
                                     ->maxLength(1000)
                                     ->required()
-                                    ->columnSpanFull()
-                                    ->helperText(
-                                        'Deskripsi ini akan diterapkan kepada seluruh siswa pada kelas ini.'
-                                    ),
+                                    ->helperText('Deskripsi berlaku untuk mata pelajaran ini dan seluruh siswa.'),
+
                             ])
                             ->columns(2),
 
@@ -273,6 +345,12 @@ class InputNilaiPerMapel extends Page implements HasTable
                                             ->required()
                                             ->live(onBlur: true),
 
+                                        Textarea::make('saran')
+                                            ->label('Saran')
+                                            ->rows(3)
+                                            ->maxLength(1000)
+                                            ->helperText('Saran berlaku untuk rapor siswa pada tahun ajaran ini.'),
+
                                         Placeholder::make(
                                             'indeks_preview',
                                         )
@@ -283,12 +361,13 @@ class InputNilaiPerMapel extends Page implements HasTable
                                                 ),
                                             ),
                                     ])
-                                    ->columns(4)
+                                    ->columns(3)
                                     ->addable(false)
                                     ->deletable(false)
                                     ->reorderable(false)
                                     ->columnSpanFull(),
                             ]),
+
                     ])
                     ->action(function (array $data): void {
                         $jumlahNilai = app(NilaiBatchService::class)->save(
@@ -351,6 +430,12 @@ class InputNilaiPerMapel extends Page implements HasTable
                     )?->deskripsi ?: 'Belum diisi')
                     ->wrap()
                     ->limit(80),
+
+                TextColumn::make('saran_rapor')
+                    ->label('Saran')
+                    ->state(fn (Siswa $record): string => $record->catatanRapors->first()?->saran ?: 'Belum diisi')
+                    ->wrap()
+                    ->limit(80),
             ])
             ->emptyStateHeading('Belum ada siswa pada kelas ini.');
     }
@@ -358,10 +443,7 @@ class InputNilaiPerMapel extends Page implements HasTable
     private function deskripsiLanjutanSaatIni(): ?string
     {
         $deskripsi = Nilai::query()
-            ->where(
-                'jadwal_mengajar_id',
-                $this->jadwalMengajar->getKey(),
-            )
+            ->where('jadwal_mengajar_id', $this->jadwalMengajar->getKey())
             ->orderBy('id')
             ->value('deskripsi');
 

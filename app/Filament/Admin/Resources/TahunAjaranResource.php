@@ -72,6 +72,7 @@ class TahunAjaranResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->defaultSort('nama', 'desc')
             ->columns([
                 TextColumn::make('nama')

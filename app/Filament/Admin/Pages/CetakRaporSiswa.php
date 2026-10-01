@@ -2,7 +2,6 @@
 
 namespace App\Filament\Admin\Pages;
 
-use App\Models\CatatanRapor;
 use App\Models\JadwalMengajar;
 use App\Models\Kelas;
 use App\Models\Siswa;
@@ -11,10 +10,8 @@ use App\Services\KenaikanKelasService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -41,7 +38,7 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
 
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 7;
 
     /**
      * @var array<string, mixed>|null
@@ -74,7 +71,13 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
 
     public function form(Schema $schema): Schema
     {
-        $tahunAjaranOptions = TahunAjaran::query()
+        $tahunAjaranQuery = TahunAjaran::query();
+
+        if (! auth()->user()?->isAdmin()) {
+            $tahunAjaranQuery->where('is_active', true);
+        }
+
+        $tahunAjaranOptions = $tahunAjaranQuery
             ->orderByDesc('is_active')
             ->orderByDesc('nama')
             ->get()
@@ -135,6 +138,7 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->query(fn (): Builder => $this->siswaQuery())
             ->defaultSort('nama_lengkap')
             ->columns([
@@ -209,42 +213,6 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
                         'tahunAjaran' => $this->tahunAjaranId(),
                     ])),
 
-                Action::make('isiSaranRapor')
-                    ->label('Isi Saran')
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('gray')
-                    ->modalHeading(fn (Siswa $record): string => 'Saran Rapor: '.$record->nama_lengkap)
-                    ->schema([
-                        Textarea::make('saran')
-                            ->label('Saran-Saran')
-                            ->rows(5)
-                            ->maxLength(1000)
-                            ->helperText('Saran ini hanya berlaku untuk siswa dan tahun ajaran yang dipilih.'),
-                    ])
-                    ->fillForm(function (Siswa $record): array {
-                        return [
-                            'saran' => CatatanRapor::query()
-                                ->where('siswa_id', $record->getKey())
-                                ->where('tahun_ajaran_id', $this->tahunAjaranId())
-                                ->value('saran'),
-                        ];
-                    })
-                    ->action(function (Siswa $record, array $data): void {
-                        CatatanRapor::query()->updateOrCreate(
-                            [
-                                'siswa_id' => $record->getKey(),
-                                'tahun_ajaran_id' => $this->tahunAjaranId(),
-                            ],
-                            [
-                                'saran' => $data['saran'] ?? null,
-                            ],
-                        );
-
-                        Notification::make()
-                            ->title('Saran rapor berhasil disimpan.')
-                            ->success()
-                            ->send();
-                    }),
             ])
             ->toolbarActions([
                 BulkAction::make('unduhRaporTerpilih')
@@ -296,7 +264,7 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
         if (
             $kelasId === null
             || $tahunAjaranId === null
-            || ! $this->bolehCetakKelas($kelasId)
+            || ! $this->bolehCetakKelas($kelasId, $tahunAjaranId)
         ) {
             return Siswa::query()->whereKey(0);
         }
@@ -327,7 +295,7 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
         if (
             $kelasId === null
             || $tahunAjaranId === null
-            || ! $this->bolehCetakKelas($kelasId)
+            || ! $this->bolehCetakKelas($kelasId, $tahunAjaranId)
         ) {
             return 0;
         }
@@ -362,7 +330,7 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
         );
     }
 
-    private function bolehCetakKelas(?int $kelasId): bool
+    private function bolehCetakKelas(?int $kelasId, ?int $tahunAjaranId = null): bool
     {
         if ($kelasId === null) {
             return false;
@@ -372,6 +340,10 @@ class CetakRaporSiswa extends Page implements HasForms, HasTable
 
         if ($user?->isAdmin()) {
             return true;
+        }
+
+        if ($tahunAjaranId !== null && ! TahunAjaran::query()->whereKey($tahunAjaranId)->where('is_active', true)->exists()) {
+            return false;
         }
 
         return $user?->isGuru()

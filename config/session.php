@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Str;
 
+$production = env('APP_ENV', 'production') === 'production';
+$cookie = (string) env('SESSION_COOKIE', Str::slug((string) env('APP_NAME', 'laravel')).'-session');
+$hostCookie = $production || str_starts_with($cookie, '__Host-');
+
 return [
 
     /*
@@ -127,10 +131,7 @@ return [
     |
     */
 
-    'cookie' => env(
-        'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
-    ),
+    'cookie' => $hostCookie && ! str_starts_with($cookie, '__Host-') ? '__Host-'.$cookie : $cookie,
 
     /*
     |--------------------------------------------------------------------------
@@ -143,7 +144,7 @@ return [
     |
     */
 
-    'path' => env('SESSION_PATH', '/'),
+    'path' => $hostCookie ? '/' : env('SESSION_PATH', '/'),
 
     /*
     |--------------------------------------------------------------------------
@@ -156,7 +157,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => $hostCookie ? null : env('SESSION_DOMAIN'),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +170,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => $hostCookie ? true : env('SESSION_SECURE_COOKIE'),
 
     /*
     |--------------------------------------------------------------------------

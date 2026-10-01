@@ -64,6 +64,7 @@ class MataPelajaranResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->defaultSort('nama_mapel')
             ->columns([
                 TextColumn::make('kode_mapel')

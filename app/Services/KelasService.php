@@ -22,6 +22,41 @@ final class KelasService
     }
 
     /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, Kelas>
+     */
+    public function createMany(array $rows): array
+    {
+        if ($rows === []) {
+            throw ValidationException::withMessages([
+                'kelas' => 'Tambahkan minimal satu kelas.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($rows): array {
+            $created = [];
+            $seenNames = [];
+
+            foreach ($rows as $index => $row) {
+                $attributes = $this->attributes($row);
+                $normalizedName = strtolower($attributes['nama_kelas']);
+
+                if (isset($seenNames[$normalizedName])) {
+                    throw ValidationException::withMessages([
+                        "kelas.{$index}.nama_kelas" => 'Nama kelas muncul lebih dari satu kali.',
+                    ]);
+                }
+
+                $seenNames[$normalizedName] = true;
+                $this->ensureNamaKelasAvailable($attributes['nama_kelas']);
+                $created[] = Kelas::query()->create($attributes);
+            }
+
+            return $created;
+        });
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      */
     public function update(Kelas $kelas, array $data): Kelas

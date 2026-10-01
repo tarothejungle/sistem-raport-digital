@@ -39,6 +39,7 @@ class Login extends \Filament\Auth\Pages\Login
             ->components([
                 TextInput::make('login')
                     ->label('USERNAME')
+                    ->validationAttribute('Username')
                     ->placeholder('Masukkan username')
                     ->prefixIcon('heroicon-m-identification')
                     ->extraFieldWrapperAttributes([
@@ -74,6 +75,8 @@ class Login extends \Filament\Auth\Pages\Login
                     ]),
 
                 $this->getTurnstileFormComponent('login')
+                    ->label('Verifikasi keamanan')
+                    ->validationAttribute('verifikasi keamanan')
                     ->size('flexible')
                     ->theme('auto')
                     ->language('id')
@@ -90,6 +93,7 @@ class Login extends \Filament\Auth\Pages\Login
         return parent::getPasswordFormComponent()
             ->hint(null)
             ->label('KATA SANDI')
+            ->validationAttribute('Kata sandi')
             ->placeholder('Masukkan kata sandi')
             ->prefixIcon('heroicon-m-lock-closed')
             ->password()

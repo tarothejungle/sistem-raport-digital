@@ -20,7 +20,8 @@ class ListMataPelajarans extends ListRecords
         return [
             CreateAction::make()
                 ->label('Tambah Mata Pelajaran')
-                ->icon('heroicon-o-plus-circle'),
+                ->icon('heroicon-o-plus-circle')
+                ->extraAttributes(['class' => 'raport-desktop-only-action']),
         ];
     }
 }

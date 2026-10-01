@@ -12,6 +12,7 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -98,6 +99,15 @@ class GuruResource extends Resource
                         ->label('Nomor Telepon')
                         ->tel()
                         ->maxLength(15),
+
+                    Select::make('jenis_kelamin')
+                        ->label('Jenis Kelamin')
+                        ->options([
+                            'L' => 'Laki-laki',
+                            'P' => 'Perempuan',
+                        ])
+                        ->native(true)
+                        ->required(),
                 ])
                 ->columns(2)
                 ->columnSpanFull(),
@@ -126,7 +136,8 @@ class GuruResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->defaultSort('created_at', 'desc')
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
+            ->defaultSort('user.name', 'asc')
             ->columns([
                 TextColumn::make('user.name')
                     ->label('Nama Guru')
@@ -136,6 +147,14 @@ class GuruResource extends Resource
                     ->label('Username')
                     ->searchable()
                     ->copyable(),
+                TextColumn::make('jenis_kelamin')
+                    ->label('Jenis Kelamin')
+                    ->formatStateUsing(static fn (?string $state): string => match ($state) {
+                        'L' => 'Laki-laki',
+                        'P' => 'Perempuan',
+                        default => '-',
+                    })
+                    ->badge(),
                 TextColumn::make('no_telp')
                     ->label('Telepon')
                     ->toggleable(),

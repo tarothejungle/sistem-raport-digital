@@ -3,6 +3,7 @@
 .env
 .env.backup
 .env.production
+.env.docker
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -43,3 +44,23 @@ Thumbs.db
 # Berkas spreadsheet kerja lokal; hanya template impor resmi yang dibagikan
 *.xlsx
 !template-import-siswa.xlsx
+
+# Arsip proyek lokal (jangan pernah di-push)
+*.zip
+
+# Data runtime & dokumen berisi data pribadi siswa (PII) — jangan dipublikasikan
+/docs/emis_students_all.json
+/docs/Leger Nilai PTS.md
+/docs/Leger Nilai PTS.pdf
+/docs/RAPOT*.pdf
+/docs/Raport*.pdf
+/docs/*.json
+
+# Laporan keamanan internal (jangan dipublikasikan)
+/docs/pentest/
+
+# Catatan kerja internal
+/docs/github.md
+
+# Dump font mentah (font produksi dilayani dari public/fonts)
+/docs/Plus_Jakarta_Sans/

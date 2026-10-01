@@ -88,9 +88,9 @@ class PengaturanMadrasahResource extends Resource
                         ->label('Tanda Tangan Kepala Madrasah')
                         ->image()
                         ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                        ->disk('public')
+                        ->disk('local')
                         ->directory('madrasah/tanda-tangan')
-                        ->visibility('public')
+                        ->visibility('private')
                         ->fetchFileInformation(false)
                         ->imagePreviewHeight('120')
                         ->maxSize(2048)
@@ -104,6 +104,7 @@ class PengaturanMadrasahResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->columns([
                 ImageColumn::make('logo_path')
                     ->label('Logo')

@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use RuntimeException;
@@ -21,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('report-bulk', static fn (Request $request): Limit => Limit::perMinute(2)
+            ->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
         if (! app()->isProduction()) {
             return;
         }
@@ -29,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
 
         if (! str_starts_with($appUrl, 'https://')) {
             throw new RuntimeException('APP_URL must use HTTPS in production.');
+        }
+
+        $assetUrl = rtrim((string) config('app.asset_url'), '/');
+
+        if ($assetUrl !== '' && ! str_starts_with($assetUrl, 'https://')) {
+            throw new RuntimeException('ASSET_URL must use HTTPS in production or remain empty.');
         }
 
         URL::forceRootUrl($appUrl);

@@ -47,6 +47,7 @@ final class GuruService
                 'user_id' => $user->getKey(),
                 ...Arr::only($data, [
                     'no_telp',
+                    'jenis_kelamin',
                     'tempat_lahir',
                     'tanggal_lahir',
                     'pendidikan_terakhir',
@@ -103,6 +104,7 @@ final class GuruService
             $guru->update([
                 ...Arr::only($data, [
                     'no_telp',
+                    'jenis_kelamin',
                     'tempat_lahir',
                     'tanggal_lahir',
                     'pendidikan_terakhir',

@@ -19,8 +19,9 @@ class ListKelas extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('Tambah Kelas')
-                ->icon('heroicon-o-plus-circle'),
+                ->label('Tambah Semua Kelas')
+                ->icon('heroicon-o-plus-circle')
+                ->extraAttributes(['class' => 'raport-desktop-only-action']),
         ];
     }
 }

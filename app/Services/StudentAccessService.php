@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\JadwalMengajar;
 use App\Models\Siswa;
+use App\Models\TahunAjaran;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +30,9 @@ final class StudentAccessService
         return JadwalMengajar::query()
             ->where('guru_id', $actor->guru->getKey())
             ->where('kelas_id', $siswa->kelas_id)
+            ->whereIn('tahun_ajaran_id', TahunAjaran::query()
+                ->select('id')
+                ->where('is_active', true))
             ->exists();
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CatatanRapor;
 use App\Models\JadwalMengajar;
 use App\Models\KkmPengajar;
 use App\Models\Nilai;
@@ -23,13 +24,19 @@ final class NilaiBatchService
      *     nisn: string,
      *     nama_lengkap: string,
      *     nilai_angka: int|null,
-     *     indeks_ketercapaian: string|null
+     *     indeks_ketercapaian: string|null,
+     *     saran: string|null
      * }>
      */
     public function rowsForSchedule(JadwalMengajar $jadwalMengajar): array
     {
         $nilaiBySiswa = Nilai::query()
             ->where('jadwal_mengajar_id', $jadwalMengajar->getKey())
+            ->get()
+            ->keyBy('siswa_id');
+
+        $saranBySiswa = CatatanRapor::query()
+            ->where('tahun_ajaran_id', $jadwalMengajar->tahun_ajaran_id)
             ->get()
             ->keyBy('siswa_id');
 
@@ -40,7 +47,7 @@ final class NilaiBatchService
             )
             ->orderBy('nama_lengkap')
             ->get()
-            ->map(function (Siswa $siswa) use ($nilaiBySiswa): array {
+            ->map(function (Siswa $siswa) use ($nilaiBySiswa, $saranBySiswa): array {
                 /** @var Nilai|null $nilai */
                 $nilai = $nilaiBySiswa->get($siswa->getKey());
 
@@ -50,6 +57,7 @@ final class NilaiBatchService
                     'nama_lengkap' => $siswa->nama_lengkap,
                     'nilai_angka' => $nilai?->nilai_angka,
                     'indeks_ketercapaian' => $nilai?->indeks_ketercapaian,
+                    'saran' => $saranBySiswa->get($siswa->getKey())?->saran,
                 ];
             })
             ->all();
@@ -61,7 +69,7 @@ final class NilaiBatchService
     }
 
     /**
-     * @param  array<int, array{siswa_id: int|string, nilai_angka: int|string|null}>  $nilaiSiswa
+     * @param  array<int, array{siswa_id: int|string, nilai_angka: int|string|null, saran?: string|null}>  $nilaiSiswa
      */
     public function save(
         JadwalMengajar $jadwalMengajar,
@@ -154,6 +162,18 @@ final class NilaiBatchService
                             $deskripsi,
                         ),
                         'is_submitted' => true,
+                    ],
+                );
+
+                CatatanRapor::query()->updateOrCreate(
+                    [
+                        'siswa_id' => (int) $barisNilai['siswa_id'],
+                        'tahun_ajaran_id' => $jadwalMengajar->tahun_ajaran_id,
+                    ],
+                    [
+                        'saran' => filled($barisNilai['saran'] ?? null)
+                            ? trim((string) $barisNilai['saran'])
+                            : null,
                     ],
                 );
             }

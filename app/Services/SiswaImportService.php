@@ -6,6 +6,7 @@ use App\Models\Kelas;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use JsonException;
 use SimpleXMLElement;
 use ZipArchive;
 
@@ -35,23 +36,29 @@ final class SiswaImportService
         $rows = match ($extension) {
             'xlsx' => $this->readXlsx($absolutePath),
             'csv' => $this->readCsv($absolutePath),
+            'json' => throw ValidationException::withMessages([
+                'file' => 'Import JSON harus melalui pratinjau dan konfirmasi pada menu Data Siswa.',
+            ]),
             default => throw ValidationException::withMessages([
-                'file' => 'Gunakan file Excel berformat .xlsx atau file .csv.',
+                'file' => 'Gunakan file berformat .xlsx, .csv, atau .json.',
             ]),
         };
 
-        $records = $this->prepareRecords($rows);
+        return DB::transaction(function () use ($rows): array {
+            $prepared = [
+                'records' => $this->prepareRecords($rows),
+                'skipped' => 0,
+            ];
 
-        return DB::transaction(function () use ($records): array {
             $summary = [
                 'created' => 0,
                 'updated' => 0,
-                'skipped' => 0,
+                'skipped' => $prepared['skipped'],
             ];
 
             $siswaService = app(SiswaService::class);
 
-            foreach ($records as $record) {
+            foreach ($prepared['records'] as $record) {
                 $result = $siswaService->upsertFromImport(
                     $record['nisn'],
                     $record['nama_lengkap'],
@@ -79,7 +86,7 @@ final class SiswaImportService
 
         if (! $uploadedFile instanceof UploadedFile || ! $uploadedFile->isValid()) {
             throw ValidationException::withMessages([
-                'file' => 'File upload tidak valid. Pilih ulang file Excel atau CSV lalu coba kembali.',
+                'file' => 'File upload tidak valid. Pilih ulang file Excel, CSV, atau JSON lalu coba kembali.',
             ]);
         }
 
@@ -87,6 +94,184 @@ final class SiswaImportService
         $extension = strtolower($uploadedFile->getClientOriginalExtension());
 
         return $this->import($absolutePath, $extension);
+    }
+
+    /**
+     * @return array{
+     *     students: array<int, array{selection_key: string, emis_id: string, nisn: string|null, nama_lengkap: string, source_class: string, source_key: string}>,
+     *     source_classes: array<string, string>,
+     *     suggested_mappings: array<string, int|null>,
+     *     skipped: int
+     * }
+     */
+    public function previewUploadedJson(mixed $uploadedFile): array
+    {
+        [$absolutePath, $extension] = $this->uploadedFilePath($uploadedFile);
+
+        if ($extension !== 'json') {
+            throw ValidationException::withMessages([
+                'file' => 'Gunakan file berformat .json.',
+            ]);
+        }
+
+        return $this->previewJson($absolutePath);
+    }
+
+    /**
+     * @return array{
+     *     students: array<int, array{selection_key: string, emis_id: string, nisn: string|null, nama_lengkap: string, source_class: string, source_key: string}>,
+     *     source_classes: array<string, string>,
+     *     suggested_mappings: array<string, int|null>,
+     *     skipped: int
+     * }
+     */
+    public function previewJson(string $absolutePath): array
+    {
+        if (! is_file($absolutePath)) {
+            throw ValidationException::withMessages([
+                'file' => 'File impor tidak ditemukan atau sudah tidak tersedia.',
+            ]);
+        }
+
+        $preview = $this->prepareJsonPreview($this->readJson($absolutePath));
+        $kelasByName = Kelas::query()
+            ->get(['id', 'nama_kelas'])
+            ->mapWithKeys(static fn (Kelas $kelas): array => [
+                self::normalizeClassName($kelas->nama_kelas) => $kelas->getKey(),
+            ]);
+
+        $preview['suggested_mappings'] = collect($preview['source_classes'])
+            ->mapWithKeys(static fn (string $name, string $key): array => [
+                $key => $kelasByName->get(self::normalizeClassName($name)),
+            ])
+            ->all();
+
+        return $preview;
+    }
+
+    /**
+     * @param  array<int, string>  $selectedStudents
+     * @param  array<string, int|string|null>  $classMappings
+     * @return array{created: int, updated: int, skipped: int}
+     */
+    public function importUploadedJsonSelection(
+        mixed $uploadedFile,
+        array $selectedStudents,
+        array $classMappings,
+    ): array {
+        [$absolutePath, $extension] = $this->uploadedFilePath($uploadedFile);
+
+        if ($extension !== 'json') {
+            throw ValidationException::withMessages([
+                'file' => 'Gunakan file berformat .json.',
+            ]);
+        }
+
+        return $this->importJsonSelection($absolutePath, $selectedStudents, $classMappings);
+    }
+
+    /**
+     * @param  array<int, string>  $selectedStudents
+     * @param  array<string, int|string|null>  $classMappings
+     * @return array{created: int, updated: int, skipped: int}
+     */
+    public function importJsonSelection(
+        string $absolutePath,
+        array $selectedStudents,
+        array $classMappings,
+    ): array {
+        $preview = $this->previewJson($absolutePath);
+        $selectedStudents = array_values(array_unique(array_map(
+            static fn (mixed $selectionKey): string => trim((string) $selectionKey),
+            $selectedStudents,
+        )));
+
+        if ($selectedStudents === []) {
+            throw ValidationException::withMessages([
+                'selected_students' => 'Pilih minimal satu siswa untuk diimpor.',
+            ]);
+        }
+
+        $studentsByKey = collect($preview['students'])->keyBy('selection_key');
+        $unknownStudents = collect($selectedStudents)
+            ->reject(static fn (string $selectionKey): bool => $studentsByKey->has($selectionKey));
+
+        if ($unknownStudents->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'selected_students' => 'Pilihan siswa tidak sesuai dengan isi file JSON. Unggah ulang file.',
+            ]);
+        }
+
+        $requiredSourceKeys = collect($selectedStudents)
+            ->map(static fn (string $selectionKey): string => $studentsByKey->get($selectionKey)['source_key'])
+            ->unique()
+            ->values();
+        $kelasIds = Kelas::query()->pluck('id')->map(static fn (int $id): int => $id)->all();
+        $records = [];
+
+        foreach ($requiredSourceKeys as $sourceKey) {
+            $kelasId = (int) ($classMappings[$sourceKey] ?? 0);
+
+            if (! in_array($kelasId, $kelasIds, true)) {
+                $sourceClass = $preview['source_classes'][$sourceKey] ?? $sourceKey;
+
+                throw ValidationException::withMessages([
+                    "class_mapping.{$sourceKey}" => "Pilih kelas tujuan untuk rombel {$sourceClass}.",
+                ]);
+            }
+        }
+
+        foreach ($selectedStudents as $selectionKey) {
+            $student = $studentsByKey->get($selectionKey);
+            $records[] = [
+                'emis_id' => $student['emis_id'],
+                'nisn' => $student['nisn'],
+                'nama_lengkap' => $student['nama_lengkap'],
+                'kelas_id' => (int) $classMappings[$student['source_key']],
+            ];
+        }
+
+        return DB::transaction(function () use ($records, $preview): array {
+            $summary = [
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => $preview['skipped'],
+            ];
+            $siswaService = app(SiswaService::class);
+
+            foreach ($records as $record) {
+                $result = $siswaService->upsertFromImport(
+                    $record['nisn'],
+                    $record['nama_lengkap'],
+                    $record['kelas_id'],
+                    $record['emis_id'],
+                );
+                $summary[$result['status']]++;
+            }
+
+            return $summary;
+        });
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function uploadedFilePath(mixed $uploadedFile): array
+    {
+        if (is_array($uploadedFile)) {
+            $uploadedFile = reset($uploadedFile) ?: null;
+        }
+
+        if (! $uploadedFile instanceof UploadedFile || ! $uploadedFile->isValid()) {
+            throw ValidationException::withMessages([
+                'file' => 'File upload tidak valid. Pilih ulang file lalu coba kembali.',
+            ]);
+        }
+
+        return [
+            $uploadedFile->getRealPath() ?: $uploadedFile->getPathname(),
+            strtolower($uploadedFile->getClientOriginalExtension()),
+        ];
     }
 
     /**
@@ -199,6 +384,120 @@ final class SiswaImportService
         }
 
         return $records;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function readJson(string $absolutePath): array
+    {
+        $contents = file_get_contents($absolutePath);
+
+        if ($contents === false) {
+            throw ValidationException::withMessages([
+                'file' => 'File JSON tidak dapat dibaca.',
+            ]);
+        }
+
+        try {
+            $rows = json_decode($contents, true, 64, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            throw ValidationException::withMessages([
+                'file' => 'Format JSON tidak valid.',
+            ]);
+        }
+
+        if (! is_array($rows) || ! array_is_list($rows)) {
+            throw ValidationException::withMessages([
+                'file' => 'Isi JSON harus berupa daftar data siswa.',
+            ]);
+        }
+
+        if (count($rows) > self::MAX_ROWS) {
+            throw ValidationException::withMessages([
+                'file' => 'File impor maksimal berisi 5.000 siswa.',
+            ]);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array{
+     *     students: array<int, array{selection_key: string, emis_id: string, nisn: string|null, nama_lengkap: string, source_class: string, source_key: string}>,
+     *     source_classes: array<string, string>,
+     *     skipped: int
+     * }
+     */
+    private function prepareJsonPreview(array $rows): array
+    {
+        if ($rows === []) {
+            throw ValidationException::withMessages([
+                'file' => 'File JSON tidak berisi data siswa.',
+            ]);
+        }
+
+        $students = [];
+        $sourceClasses = [];
+        $seenStudents = [];
+        $skipped = 0;
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                $skipped++;
+
+                continue;
+            }
+
+            $emisId = trim((string) ($row['id'] ?? ''));
+            $nisn = $this->digits((string) ($row['nisn'] ?? ''));
+            $nisn = preg_match('/^\d{8,20}$/', $nisn) === 1 ? $nisn : null;
+            $namaLengkap = trim((string) ($row['full_name'] ?? $row['nama_lengkap'] ?? ''));
+            $namaKelas = trim((string) (
+                $row['study_group_name']
+                ?? data_get($row, 'learning_activity.study_group.name')
+                ?? ''
+            ));
+
+            if ($emisId === '' || $namaLengkap === '' || $namaKelas === '') {
+                $skipped++;
+
+                continue;
+            }
+
+            $selectionKey = 'emis:'.$emisId;
+
+            if (isset($seenStudents[$selectionKey])) {
+                $skipped++;
+
+                continue;
+            }
+
+            $sourceKey = sha1(self::normalizeClassName($namaKelas));
+            $seenStudents[$selectionKey] = true;
+            $sourceClasses[$sourceKey] = $namaKelas;
+            $students[] = [
+                'selection_key' => $selectionKey,
+                'emis_id' => $emisId,
+                'nisn' => $nisn,
+                'nama_lengkap' => $namaLengkap,
+                'source_class' => $namaKelas,
+                'source_key' => $sourceKey,
+            ];
+        }
+
+        if ($students === []) {
+            throw ValidationException::withMessages([
+                'file' => 'Tidak ada data siswa yang dapat diimpor. Pastikan id, full_name, dan study_group_name terisi.',
+            ]);
+        }
+
+        return [
+            'students' => $students,
+            'source_classes' => $sourceClasses,
+            'skipped' => $skipped,
+        ];
     }
 
     /**

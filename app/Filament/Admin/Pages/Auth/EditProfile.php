@@ -65,6 +65,11 @@ class EditProfile extends \Filament\Auth\Pages\EditProfile
                         ->label('Email')
                         ->prefixIcon('heroicon-o-envelope'),
 
+                    $this->getCurrentPasswordFormComponent()
+                        ->label('Kata Sandi Saat Ini')
+                        ->prefixIcon('heroicon-o-lock-closed')
+                        ->columnSpanFull(),
+
                     Placeholder::make('role')
                         ->label('Peran Akun')
                         ->content(fn (): string => $this->roleLabel())
@@ -128,7 +133,7 @@ class EditProfile extends \Filament\Auth\Pages\EditProfile
     {
         $guruData = Arr::pull($data, 'guru', []);
 
-        $record->update($data);
+        $record = parent::handleRecordUpdate($record, $data);
 
         if ($record instanceof User && $record->isGuru() && $record->guru !== null) {
             $record->guru->update(Arr::only($guruData, [

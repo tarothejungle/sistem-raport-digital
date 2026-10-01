@@ -68,22 +68,16 @@ final class AbsensiGuruSyncService
         $payload = $response->json();
 
         if (! $response->successful()) {
-            $detail = is_array($payload)
-                ? trim((string) ($payload['error_detail'] ?? ''))
-                : '';
+            report(new RuntimeException('Server Absensi merespons HTTP '.$response->status().'.'));
 
-            throw new RuntimeException($detail !== '' ? $detail : 'Server Absensi menolak permintaan data guru.');
+            throw new RuntimeException('Server Absensi menolak permintaan data guru.');
         }
 
         if (! is_array($payload)
             || ($payload['status'] ?? '') !== 'success'
             || ! is_array($payload['data'] ?? null)
         ) {
-            $detail = is_array($payload)
-                ? trim((string) ($payload['error_detail'] ?? ''))
-                : '';
-
-            throw new RuntimeException($detail !== '' ? $detail : 'Format respon dari server Absensi tidak valid.');
+            throw new RuntimeException('Format respon dari server Absensi tidak valid.');
         }
 
         return array_values($payload['data']);
@@ -110,6 +104,9 @@ final class AbsensiGuruSyncService
 
         $name = trim((string) ($item['nama'] ?? ''));
         $phone = trim((string) ($item['no_telepon'] ?? ''));
+        $jenisKelamin = $this->normalizeJenisKelamin(
+            $item['jk'] ?? $item['jenis_kelamin'] ?? null,
+        );
 
         if ($name === '') {
             throw new RuntimeException('Data guru dari server Absensi tidak lengkap.');
@@ -132,6 +129,7 @@ final class AbsensiGuruSyncService
 
             $user->guru()->create([
                 'no_telp' => $phone !== '' ? $phone : null,
+                'jenis_kelamin' => $jenisKelamin,
             ]);
 
             return true;
@@ -142,10 +140,37 @@ final class AbsensiGuruSyncService
             'email' => $email,
         ]);
 
-        $user->guru()->updateOrCreate([], [
+        $guruData = [
             'no_telp' => $phone !== '' ? $phone : null,
-        ]);
+        ];
+
+        if ($jenisKelamin !== null) {
+            $guruData['jenis_kelamin'] = $jenisKelamin;
+        }
+
+        $user->guru()->updateOrCreate([], $guruData);
 
         return false;
+    }
+
+    private function normalizeJenisKelamin(mixed $value): ?string
+    {
+        $value = Str::of((string) $value)
+            ->ascii()
+            ->lower()
+            ->replaceMatches('/[^a-z]+/', '')
+            ->toString();
+
+        if ($value === '') {
+            return null;
+        }
+
+        return match ($value) {
+            'l', 'lakilaki', 'pria', 'male' => 'L',
+            'p', 'perempuan', 'wanita', 'female' => 'P',
+            default => throw new RuntimeException(
+                'Jenis kelamin guru dari server Absensi tidak valid.',
+            ),
+        };
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Filament\Admin\Resources\PengaturanMadrasahResource\Pages;
 
 use App\Filament\Admin\Resources\PengaturanMadrasahResource;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPengaturanMadrasah extends ListRecords
@@ -17,10 +16,6 @@ class ListPengaturanMadrasah extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            CreateAction::make()
-                ->label('Isi Pengaturan Madrasah')
-                ->icon('heroicon-o-plus-circle'),
-        ];
+        return [];
     }
 }

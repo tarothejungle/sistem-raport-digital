@@ -85,7 +85,7 @@ class RaportPdfController extends Controller
         }
 
         $zipName = sprintf('rapor-%s-%s.zip', Str::slug($tahunAjaran->label), now()->format('YmdHis'));
-        $zipPath = $zipDirectory.DIRECTORY_SEPARATOR.$zipName;
+        $zipPath = $zipDirectory.DIRECTORY_SEPARATOR.Str::uuid().'.zip';
         $zip = new ZipArchive;
 
         abort_unless($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 500, 'File ZIP gagal dibuat.');
@@ -94,10 +94,14 @@ class RaportPdfController extends Controller
             foreach ($siswas as $siswa) {
                 $this->authorizeCetakRapor($siswa, $tahunAjaran);
 
-                $zip->addFromString(
+                $added = $zip->addFromString(
                     $this->fileName($siswa, $tahunAjaran),
                     $this->makePdf($siswa, $tahunAjaran, $raportPdfService)->output(),
                 );
+
+                if (! $added) {
+                    throw new \RuntimeException('Rapor gagal ditambahkan ke file ZIP.');
+                }
             }
         } catch (\Throwable $exception) {
             $zip->close();
@@ -106,7 +110,11 @@ class RaportPdfController extends Controller
             throw $exception;
         }
 
-        $zip->close();
+        if (! $zip->close()) {
+            @unlink($zipPath);
+
+            abort(500, 'File ZIP gagal diselesaikan.');
+        }
 
         return response()
             ->download($zipPath, $zipName)
@@ -120,6 +128,8 @@ class RaportPdfController extends Controller
         if ($user?->isAdmin()) {
             return;
         }
+
+        abort_unless($tahunAjaran->is_active, 403);
 
         $guru = $user?->guru;
         $kelas = app(KenaikanKelasService::class)->kelasUntukTahunAjaran(

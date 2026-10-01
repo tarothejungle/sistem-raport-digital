@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Block static source maps before checking existing files.
+    RewriteRule \.map$ - [R=404,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

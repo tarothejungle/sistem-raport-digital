@@ -86,6 +86,20 @@
             padding: 5px;
         }
 
+        .attendance-table {
+            width: 42%;
+        }
+
+        .attendance-table td {
+            border: 1px solid #374151;
+            padding: 3px 5px;
+        }
+
+        .attendance-table td:last-child {
+            text-align: center;
+            width: 34%;
+        }
+
         .section-title {
             font-size: 9px;
             font-weight: bold;
@@ -203,6 +217,23 @@
     <div class="saran">
         {{ $saran ?: '-' }}
     </div>
+
+    <p class="section-title">Ketidakhadiran</p>
+
+    <table class="attendance-table">
+        <tr>
+            <td>Sakit</td>
+            <td>{{ $absensi['sakit'] }} hari</td>
+        </tr>
+        <tr>
+            <td>Izin</td>
+            <td>{{ $absensi['izin'] }} hari</td>
+        </tr>
+        <tr>
+            <td>Alpa</td>
+            <td>{{ $absensi['alpa'] }} hari</td>
+        </tr>
+    </table>
 
     <table class="signature">
         <tr>

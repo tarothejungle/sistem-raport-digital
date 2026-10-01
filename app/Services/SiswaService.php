@@ -52,7 +52,7 @@ final class SiswaService
             return Siswa::query()->create([
                 'user_id' => $user->getKey(),
                 'nisn' => $nisn,
-                ...Arr::only($data, ['nama_lengkap', 'kelas_id']),
+                ...Arr::only($data, ['nama_lengkap', 'jenis_kelamin', 'kelas_id']),
                 'can_view_nilai' => false,
                 'status' => Siswa::STATUS_AKTIF,
             ]);
@@ -112,7 +112,7 @@ final class SiswaService
 
             $siswa->fill([
                 'nisn' => $nisn,
-                ...Arr::only($data, ['nama_lengkap', 'kelas_id']),
+                ...Arr::only($data, ['nama_lengkap', 'jenis_kelamin', 'kelas_id']),
             ]);
 
             if (blank($siswa->status)) {
@@ -129,12 +129,20 @@ final class SiswaService
      * @return array{status: 'created'|'updated', siswa: Siswa}
      */
     public function upsertFromImport(
-        string $nisn,
+        ?string $nisn,
         string $namaLengkap,
         int $kelasId,
+        ?string $emisId = null,
     ): array {
-        $nisn = $this->normalizeNisn($nisn);
+        $nisn = filled($nisn) ? $this->normalizeNisn($nisn) : null;
+        $emisId = filled($emisId) ? trim($emisId) : null;
         $namaLengkap = trim($namaLengkap);
+
+        if ($nisn === null && $emisId === null) {
+            throw ValidationException::withMessages([
+                'siswa' => 'Siswa tanpa NISN wajib memiliki ID EMIS.',
+            ]);
+        }
 
         if ($namaLengkap === '') {
             throw ValidationException::withMessages([
@@ -150,31 +158,31 @@ final class SiswaService
 
         return DB::transaction(function () use (
             $nisn,
+            $emisId,
             $namaLengkap,
             $kelasId,
         ): array {
             $siswa = Siswa::query()
                 ->with('user')
-                ->where('nisn', $nisn)
+                ->when(
+                    $emisId !== null,
+                    static fn ($query) => $query->where('emis_id', $emisId),
+                    static fn ($query) => $query->where('nisn', $nisn),
+                )
                 ->first();
 
+            if ($siswa === null && $nisn !== null) {
+                $siswa = Siswa::query()
+                    ->with('user')
+                    ->where('nisn', $nisn)
+                    ->first();
+            }
+
             if ($siswa === null) {
-                $account = $this->accountUntukImpor($nisn);
-                $this->accountIdentityService->ensureAvailable(
-                    $account['username'],
-                    $account['email'],
-                );
-
-                $user = User::query()->create([
-                    'name' => $namaLengkap,
-                    'username' => $account['username'],
-                    'email' => $account['email'],
-                    'password' => Hash::make(Str::password(32)),
-                    'role' => User::ROLE_SISWA,
-                ]);
-
+                $user = $nisn === null ? null : $this->createImportAccount($nisn, $namaLengkap);
                 $siswa = Siswa::query()->create([
-                    'user_id' => $user->getKey(),
+                    'user_id' => $user?->getKey(),
+                    'emis_id' => $emisId,
                     'nisn' => $nisn,
                     'nama_lengkap' => $namaLengkap,
                     'kelas_id' => $kelasId,
@@ -189,35 +197,19 @@ final class SiswaService
             }
 
             $siswa->fill([
+                'emis_id' => $emisId ?? $siswa->emis_id,
+                'nisn' => $nisn ?? $siswa->nisn,
                 'nama_lengkap' => $namaLengkap,
                 'kelas_id' => $kelasId,
                 'status' => $siswa->status ?: Siswa::STATUS_AKTIF,
             ]);
-
             $siswa->save();
 
-            if ($siswa->user === null) {
-                $account = $this->accountUntukImpor($nisn);
-                $this->accountIdentityService->ensureAvailable(
-                    $account['username'],
-                    $account['email'],
-                );
-
-                $user = User::query()->create([
-                    'name' => $namaLengkap,
-                    'username' => $account['username'],
-                    'email' => $account['email'],
-                    'password' => Hash::make(Str::password(32)),
-                    'role' => User::ROLE_SISWA,
-                ]);
-
-                $siswa->update([
-                    'user_id' => $user->getKey(),
-                ]);
-            } else {
-                $siswa->user->update([
-                    'name' => $namaLengkap,
-                ]);
+            if ($siswa->user === null && $nisn !== null) {
+                $user = $this->createImportAccount($nisn, $namaLengkap);
+                $siswa->update(['user_id' => $user->getKey()]);
+            } elseif ($siswa->user !== null) {
+                $siswa->user->update(['name' => $namaLengkap]);
             }
 
             return [
@@ -225,6 +217,23 @@ final class SiswaService
                 'siswa' => $siswa->refresh(),
             ];
         });
+    }
+
+    private function createImportAccount(string $nisn, string $namaLengkap): User
+    {
+        $account = $this->accountUntukImpor($nisn);
+        $this->accountIdentityService->ensureAvailable(
+            $account['username'],
+            $account['email'],
+        );
+
+        return User::query()->create([
+            'name' => $namaLengkap,
+            'username' => $account['username'],
+            'email' => $account['email'],
+            'password' => Hash::make(Str::password(32)),
+            'role' => User::ROLE_SISWA,
+        ]);
     }
 
     public function delete(Siswa $siswa): bool

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6c419192516acd3597b27ae9b99eed71",
+    "content-hash": "f597a07902c8e0ce6892b1a637e8bd32",
     "packages": [
         {
             "name": "albertofuentes/filament-maintenance",

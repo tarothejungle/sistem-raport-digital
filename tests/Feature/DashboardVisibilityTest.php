@@ -82,6 +82,18 @@ class DashboardVisibilityTest extends TestCase
         $this->assertCount(1, InputNilaiPerMapel::navigasiMataPelajaran());
     }
 
+    public function test_teacher_dashboard_displays_gender_in_personal_details(): void
+    {
+        [$guru] = $this->seedAcademicData();
+        $guru->update(['jenis_kelamin' => 'P']);
+        $this->actingAs($guru->user);
+
+        $details = collect($this->viewDataOf(new RaportCommandCenter)['guruDetails'])
+            ->keyBy('label');
+
+        $this->assertSame('Perempuan', $details['Jenis Kelamin']['value']);
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\PreventAccessDuringSiteMaintenance;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->replace(LaravelTrustProxies::class, TrustProxies::class);
         $middleware->append(SecurityHeaders::class);
+        $middleware->appendToGroup('web', PreventAccessDuringSiteMaintenance::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

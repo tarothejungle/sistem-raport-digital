@@ -9,6 +9,7 @@ use App\Filament\Admin\Pages\Auth\PasswordReset\RequestPasswordReset;
 use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Admin\Widgets\RaportCommandCenter;
 use App\Filament\Admin\Widgets\RaportOverview;
+use App\Http\Middleware\PreventAccessDuringSiteMaintenance;
 use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
@@ -98,7 +99,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Sistem Rapor Digital')
             ->brandLogo(fn (): View => view('components.filament-logo'))
             ->brandLogoHeight('2.25rem')
-            ->favicon(asset('logo/logo-rapor.png'))
+            ->favicon('/logo/logo-baru-dark.png?v='.filemtime(public_path('logo/logo-baru-dark.png')))
             ->homeUrl(fn (): string => '/admin')
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarWidth('18rem')
@@ -143,6 +144,7 @@ class AdminPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                PreventAccessDuringSiteMaintenance::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
@@ -180,6 +182,11 @@ class AdminPanelProvider extends PanelProvider
         );
 
         FilamentView::registerRenderHook(
+            PanelsRenderHook::TOPBAR_START,
+            static fn (): View => view('components.mobile-topbar-brand'),
+        );
+
+        FilamentView::registerRenderHook(
             PanelsRenderHook::SIDEBAR_NAV_START,
             static fn (): View => view(
                 'filament.admin.components.sidebar-context',
@@ -191,6 +198,16 @@ class AdminPanelProvider extends PanelProvider
             static fn (): View => view(
                 'filament.admin.components.input-nilai-navigation',
             ),
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_END,
+            static fn (): View => view('components.mobile-bottom-nav'),
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_END,
+            static fn (): View => view('components.announcement-dialog'),
         );
     }
 }

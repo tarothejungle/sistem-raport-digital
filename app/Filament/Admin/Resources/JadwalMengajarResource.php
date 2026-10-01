@@ -37,6 +37,7 @@ class JadwalMengajarResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table raport-mobile-grouped-table'])
             ->defaultSort('kelas_id')
             ->defaultGroup('kelas.nama_kelas')
             ->groups([

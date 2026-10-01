@@ -1,7 +1,7 @@
 <?php
 
 use Albertofuentes\FilamentMaintenance\Models\MaintenanceEvent;
-use Albertofuentes\FilamentMaintenance\Models\MaintenanceSetting;
+use App\Models\MaintenanceSetting;
 
 return [
     /*
@@ -17,8 +17,8 @@ return [
     /*
      * Fallback content for new panel settings.
      */
-    'default_title' => 'Panel under maintenance',
-    'default_message' => 'We are performing maintenance. Please try again later.',
+    'default_title' => 'Pembaruan Sistem',
+    'default_message' => 'Website sedang dalam proses pemeliharaan. Mohon coba kembali beberapa saat lagi.',
 
     /*
      * Blade view rendered when a visitor cannot bypass maintenance.

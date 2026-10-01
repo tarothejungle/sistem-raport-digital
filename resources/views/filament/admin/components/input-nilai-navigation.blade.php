@@ -122,15 +122,15 @@
                     );
 
                     if (akademikItems) {
-                        const accessNilaiItem = [...akademikItems.children].find(
-                            (item) => item.textContent.trim().startsWith('Akses Nilai Siswa'),
+                        const absenSiswaItem = [...akademikItems.children].find(
+                            (item) => item.textContent.trim().startsWith('Absen Siswa'),
                         );
 
                         if (navigation.parentElement !== akademikItems) {
-                            if (accessNilaiItem) {
+                            if (absenSiswaItem) {
                                 akademikItems.insertBefore(
                                     navigation,
-                                    accessNilaiItem,
+                                    absenSiswaItem,
                                 );
                             } else {
                                 akademikItems.appendChild(navigation);

@@ -65,6 +65,15 @@ class SiswaResource extends Resource
                         ->required()
                         ->maxLength(150),
 
+                    Select::make('jenis_kelamin')
+                        ->label('Jenis Kelamin')
+                        ->options([
+                            'L' => 'Laki-laki',
+                            'P' => 'Perempuan',
+                        ])
+                        ->native(true)
+                        ->required(),
+
                     Select::make('kelas_id')
                         ->relationship('kelas', 'nama_kelas')
                         ->label('Kelas')
@@ -131,6 +140,7 @@ class SiswaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->defaultSort('nama_lengkap')
             ->columns([
                 TextColumn::make('user.username')
@@ -146,6 +156,14 @@ class SiswaResource extends Resource
                     ->label('Nama Lengkap')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('jenis_kelamin')
+                    ->label('Jenis Kelamin')
+                    ->formatStateUsing(static fn (?string $state): string => match ($state) {
+                        'L' => 'Laki-laki',
+                        'P' => 'Perempuan',
+                        default => '-',
+                    })
+                    ->badge(),
                 TextColumn::make('kelas.nama_kelas')
                     ->label('Kelas')
                     ->badge()

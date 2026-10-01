@@ -125,6 +125,7 @@ class KenaikanKelas extends Page implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table'])
             ->query(fn (): Builder => $this->siswaQuery())
             ->defaultSort('kelas_id')
             ->columns([

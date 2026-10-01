@@ -63,6 +63,7 @@ class AlumniResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'raport-mobile-full-search-table raport-mobile-compact-table'])
             ->defaultSort('tanggal_lulus', 'desc')
             ->columns([
                 TextColumn::make('nisn')

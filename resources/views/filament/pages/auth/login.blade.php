@@ -27,8 +27,8 @@
 
             <header class="srd-game-card__header">
                 <a href="{{ url('/') }}" class="srd-game-card__badge" aria-label="Sistem Rapor Digital - Beranda">
-                    <img src="{{ asset('logo/logo-rapor-dark.png') }}" alt="" class="srd-theme-logo srd-theme-logo--light">
-                    <img src="{{ asset('logo/logo-rapor-light.png') }}" alt="" class="srd-theme-logo srd-theme-logo--dark">
+                    <img src="/logo/logo-baru-dark.png" alt="" class="srd-theme-logo srd-theme-logo--light">
+                    <img src="/logo/logo-baru-light.png" alt="" class="srd-theme-logo srd-theme-logo--dark">
                 </a>
 
                 <h1 id="login-heading">Masuk ke Portal</h1>
@@ -49,12 +49,12 @@
     <style>
         body.fi-body:has(.srd-game-login),
         .fi-simple-layout:has(.srd-game-login) {
-            background: #eaf2ff !important;
+            background: #e8edf4 !important;
         }
 
         html.dark body.fi-body:has(.srd-game-login),
         html.dark .fi-simple-layout:has(.srd-game-login) {
-            background: #020617 !important;
+            background: #141c29 !important;
         }
 
         .fi-simple-layout:has(.srd-game-login)::before,
@@ -196,28 +196,31 @@
             width: min(100%, 29rem);
             overflow: hidden;
             padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.68);
-            border-radius: 1.5rem;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 30px 90px rgba(30, 64, 175, 0.2), 0 8px 24px rgba(15, 23, 42, 0.08);
+            border: 0;
+            border-radius: 1.75rem;
+            background: #e8edf4;
+            box-shadow: 14px 14px 30px #c6cedb, -14px -14px 30px #ffffff;
             opacity: 1;
             transform: perspective(1000px) rotateX(var(--card-rx)) rotateY(var(--card-ry));
             transform-style: preserve-3d;
-            backdrop-filter: blur(24px);
             animation: srd-card-enter 420ms cubic-bezier(.2, .8, .2, 1) both;
             transition: opacity 420ms ease, transform 420ms cubic-bezier(.2, .8, .2, 1), box-shadow 180ms ease;
             will-change: transform;
         }
 
         .srd-game-card:hover {
-            box-shadow: 0 34px 100px rgba(30, 64, 175, 0.28), 0 10px 28px rgba(15, 23, 42, 0.1);
+            box-shadow: 18px 18px 38px #c6cedb, -18px -18px 38px #ffffff;
             transform: perspective(1000px) translateY(-3px) scale(1.01) rotateX(var(--card-rx)) rotateY(var(--card-ry));
         }
 
         html.dark .srd-game-card {
-            border-color: rgba(148, 163, 184, 0.18);
-            background: rgba(15, 23, 42, 0.8);
-            box-shadow: 0 32px 100px rgba(0, 0, 0, 0.58), 0 0 45px rgba(37, 99, 235, 0.2);
+            border: 0;
+            background: #1b2434;
+            box-shadow: 14px 14px 30px #121926, -14px -14px 30px #253044;
+        }
+
+        html.dark .srd-game-card:hover {
+            box-shadow: 18px 18px 38px #121926, -18px -18px 38px #253044;
         }
 
         .srd-game-card__shine {
@@ -243,7 +246,7 @@
             justify-content: center;
             width: 3.65rem;
             height: 4rem;
-            margin-bottom: 0.9rem;
+            margin-bottom: 0.35rem;
             color: #0f172a !important;
             filter: drop-shadow(0 10px 16px rgba(15, 23, 42, 0.28));
             transition: transform 180ms cubic-bezier(.2, .8, .2, 1), filter 180ms ease;
@@ -358,27 +361,28 @@
         .srd-game-card__form .fi-input-wrp {
             min-height: 3.15rem !important;
             overflow: hidden;
-            border: 1px solid #cbd5e1 !important;
+            border: 0 !important;
             border-radius: 0.9rem !important;
-            background: rgba(248, 250, 252, 0.84) !important;
-            box-shadow: 0 3px 9px rgba(15, 23, 42, 0.04) !important;
-            transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease !important;
+            background: #e8edf4 !important;
+            box-shadow: inset 4px 4px 9px #c6cedb, inset -4px -4px 9px #ffffff !important;
+            transition: box-shadow 160ms ease, transform 160ms ease !important;
         }
 
         html.dark .srd-game-card__form .fi-input-wrp {
-            border-color: rgba(148, 163, 184, 0.24) !important;
-            background: rgba(2, 6, 23, 0.58) !important;
+            background: #1b2434 !important;
+            box-shadow: inset 4px 4px 9px #121926, inset -4px -4px 9px #253044 !important;
         }
 
         .srd-game-card__form .fi-input-wrp:hover {
-            border-color: #60a5fa !important;
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
 
         .srd-game-card__form .fi-input-wrp:focus-within {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18), 0 8px 18px rgba(37, 99, 235, 0.1) !important;
-            transform: scale(1.02);
+            box-shadow: inset 4px 4px 9px #c6cedb, inset -4px -4px 9px #ffffff, 0 0 0 2px rgba(37, 99, 235, 0.4) !important;
+        }
+
+        html.dark .srd-game-card__form .fi-input-wrp:focus-within {
+            box-shadow: inset 4px 4px 9px #121926, inset -4px -4px 9px #253044, 0 0 0 2px rgba(96, 165, 250, 0.45) !important;
         }
 
         .srd-game-card__form .fi-input-wrp-prefix,
@@ -472,14 +476,15 @@
             min-height: 4.2rem !important;
             padding: 0.18rem !important;
             overflow: hidden !important;
-            border: 1px solid #cbd5e1 !important;
+            border: 0 !important;
             border-radius: 0.9rem !important;
-            background: rgba(248, 250, 252, 0.7) !important;
+            background: #e8edf4 !important;
+            box-shadow: inset 3px 3px 7px #c6cedb, inset -3px -3px 7px #ffffff !important;
         }
 
         html.dark .srd-game-card__form .srd-login-turnstile {
-            border-color: rgba(148, 163, 184, 0.2) !important;
-            background: rgba(2, 6, 23, 0.42) !important;
+            background: #1b2434 !important;
+            box-shadow: inset 3px 3px 7px #121926, inset -3px -3px 7px #253044 !important;
         }
 
         .srd-game-card__form .fi-form-actions {
@@ -493,24 +498,28 @@
             width: 100% !important;
             min-height: 3.25rem !important;
             margin: 0 !important;
-            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            border: 0 !important;
             border-radius: 0.9rem !important;
             background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.32), inset 0 1px rgba(255, 255, 255, 0.18) !important;
+            box-shadow: 6px 6px 13px #c6cedb, -6px -6px 13px #ffffff !important;
             color: #fff !important;
             font-size: 0.88rem !important;
             font-weight: 800 !important;
             transition: box-shadow 160ms ease, filter 160ms ease, transform 120ms ease !important;
         }
 
+        html.dark .srd-game-card__form .srd-login-submit.fi-btn {
+            box-shadow: 6px 6px 13px #121926, -6px -6px 13px #253044 !important;
+        }
+
         .srd-game-card__form .srd-login-submit.fi-btn:hover:not(:disabled) {
             filter: brightness(1.08);
-            box-shadow: 0 17px 34px rgba(37, 99, 235, 0.4), inset 0 1px rgba(255, 255, 255, 0.22) !important;
             transform: translateY(-2px) scale(1.02);
         }
 
         .srd-game-card__form .srd-login-submit.fi-btn:active:not(:disabled) {
             transform: translateY(0) scale(0.98);
+            box-shadow: inset 3px 3px 7px #123c66, inset -3px -3px 7px #3575aa !important;
         }
 
         .srd-game-card__form .fi-fo-field-wrp-error-message {

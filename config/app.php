@@ -56,6 +56,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'asset_url' => env('ASSET_URL'),
+
+    'vite_dev_server_url' => env('VITE_DEV_SERVER_URL'),
+
     /*
     |--------------------------------------------------------------------------
     | Trusted Proxies

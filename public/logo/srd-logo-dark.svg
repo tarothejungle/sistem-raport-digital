@@ -1,0 +1,16 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Sistem Rapor Digital logo (latar gelap)</title>
+  <!-- Versi untuk latar gelap: kartu biru terang, pensil putih agar kontras -->
+  <path fill-rule="evenodd" clip-rule="evenodd" d="
+    M60 36 H146 L196 86 V204 C196 213 189 220 180 220 H60 C51 220 44 213 44 204 V52 C44 43 51 36 60 36 Z
+    M146 36 V74 C146 80 151 86 158 86 H196 Z
+  " fill="#3F86C7"/>
+  <rect x="72" y="112" width="84" height="12" rx="6" fill="#F4F7FB"/>
+  <rect x="72" y="140" width="84" height="12" rx="6" fill="#F4F7FB" opacity="0.6"/>
+  <rect x="72" y="168" width="52" height="12" rx="6" fill="#F4F7FB" opacity="0.6"/>
+  <path d="M96 150 l16 17 46 -60" stroke="#0B1626" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M178 70 l30 22 -74 102 -36 9 9 -37 Z" fill="#F4F7FB"/>
+  <path d="M178 70 l30 22 -12 17 -30 -22 Z" fill="#F4C560"/>
+  <path d="M98 194 l36 -9 -27 -20 Z" fill="#F4F7FB"/>
+  <path d="M98 194 l14 -3.5 -10 -7.5 Z" fill="#0B1626"/>
+</svg>

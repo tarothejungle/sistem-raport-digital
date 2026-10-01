@@ -6,12 +6,12 @@
 >
     <div class="w-9 h-9 flex-shrink-0 flex items-center justify-center">
         <img
-            src="{{ asset('logo/logo-rapor-dark.png') }}"
+            src="/logo/logo-baru-dark.png"
             alt=""
             class="raport-brand-logo raport-brand-logo--light-theme h-full w-full object-contain"
         >
         <img
-            src="{{ asset('logo/logo-rapor-light.png') }}"
+            src="/logo/logo-baru-light.png"
             alt=""
             class="raport-brand-logo raport-brand-logo--dark-theme h-full w-full object-contain"
         >

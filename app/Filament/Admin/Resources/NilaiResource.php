@@ -93,7 +93,12 @@ class NilaiResource extends Resource
         if ($user?->isGuru() && $guruId !== null) {
             return $query->whereHas(
                 'jadwalMengajar',
-                static fn (Builder $jadwalQuery): Builder => $jadwalQuery->where('guru_id', $guruId),
+                static fn (Builder $jadwalQuery): Builder => $jadwalQuery
+                    ->where('guru_id', $guruId)
+                    ->whereHas(
+                        'tahunAjaran',
+                        static fn (Builder $tahunQuery): Builder => $tahunQuery->where('is_active', true),
+                    ),
             );
         }
 
@@ -118,22 +123,16 @@ class NilaiResource extends Resource
                     Select::make('siswa_id')
                         ->label('Peserta Didik')
                         ->options(static function (Get $get): array {
-                            $kelasId = JadwalMengajar::query()
-                                ->whereKey($get('jadwal_mengajar_id'))
-                                ->value('kelas_id');
+                            $jadwal = static::resolveAvailableJadwal($get('jadwal_mengajar_id'));
 
-                            if ($kelasId === null) {
+                            if ($jadwal === null) {
                                 return [];
                             }
 
-                            $tahunAjaranId = JadwalMengajar::query()
-                                ->whereKey($get('jadwal_mengajar_id'))
-                                ->value('tahun_ajaran_id');
-
                             return app(KenaikanKelasService::class)
                                 ->siswaUntukKelasTahunQuery(
-                                    (int) $kelasId,
-                                    $tahunAjaranId !== null ? (int) $tahunAjaranId : null,
+                                    (int) $jadwal->kelas_id,
+                                    (int) $jadwal->tahun_ajaran_id,
                                 )
                                 ->orderBy('nama_lengkap')
                                 ->pluck('nama_lengkap', 'id')
@@ -145,9 +144,7 @@ class NilaiResource extends Resource
                     Placeholder::make('ringkasan_jadwal')
                         ->label('Informasi Rapor')
                         ->content(static function (Get $get): string {
-                            $jadwal = JadwalMengajar::query()
-                                ->with(['mataPelajaran', 'guru.user', 'kelas'])
-                                ->find($get('jadwal_mengajar_id'));
+                            $jadwal = static::resolveAvailableJadwal($get('jadwal_mengajar_id'));
 
                             if ($jadwal === null) {
                                 return 'Pilih penugasan pengajar terlebih dahulu.';
@@ -179,9 +176,7 @@ class NilaiResource extends Resource
                     Placeholder::make('predikat_preview')
                         ->label('Predikat (Otomatis)')
                         ->content(static function (Get $get): string {
-                            $jadwal = JadwalMengajar::query()
-                                ->with('mataPelajaran')
-                                ->find($get('jadwal_mengajar_id'));
+                            $jadwal = static::resolveAvailableJadwal($get('jadwal_mengajar_id'));
                             $nilaiAngka = $get('nilai_angka');
 
                             if ($jadwal === null || ! is_numeric($nilaiAngka)) {
@@ -318,10 +313,24 @@ class NilaiResource extends Resource
         $guruId = $user?->guru?->getKey();
 
         if ($user?->isGuru() && $guruId !== null) {
-            return $query->where('guru_id', $guruId);
+            return $query
+                ->where('guru_id', $guruId)
+                ->whereHas(
+                    'tahunAjaran',
+                    static fn (Builder $tahunQuery): Builder => $tahunQuery->where('is_active', true),
+                );
         }
 
         return $query->whereKey(0);
+    }
+
+    private static function resolveAvailableJadwal(mixed $id): ?JadwalMengajar
+    {
+        if (blank($id)) {
+            return null;
+        }
+
+        return static::availableJadwalQuery()->find($id);
     }
 
     private static function canManageAnyNilai(): bool
@@ -345,6 +354,12 @@ class NilaiResource extends Resource
         return $user?->isGuru()
             && $user->guru?->can_input_nilai === true
             && $guruId !== null
-            && $nilai->jadwalMengajar()->where('guru_id', $guruId)->exists();
+            && $nilai->jadwalMengajar()
+                ->where('guru_id', $guruId)
+                ->whereHas(
+                    'tahunAjaran',
+                    static fn (Builder $tahunQuery): Builder => $tahunQuery->where('is_active', true),
+                )
+                ->exists();
     }
 }

@@ -16,11 +16,15 @@ class ExampleTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertSee('Master Data & Import', false)
-            ->assertSee('Penugasan & Input Nilai', false)
-            ->assertSee('Kenaikan & Kelulusan', false)
-            ->assertSee('Portal Nilai Siswa')
-            ->assertSee('Notifikasi & Akun', false);
+            ->assertSee('Dari kelas sampai rapor,')
+            ->assertSee('Absensi ikut masuk rapor')
+            ->assertSee('Nilai lebih mudah dikelola')
+            ->assertSee('Riwayat siswa tetap rapi')
+            ->assertSee('Siswa melihat hasilnya')
+            ->assertSee('href="#cara-kerja"', false)
+            ->assertSee('href="#fitur"', false)
+            ->assertSee('href="'.route('login').'"', false)
+            ->assertDontSee('Lihat Tampilan');
     }
 
     public function test_login_page_does_not_show_the_removed_journey_copy(): void
